@@ -348,7 +348,7 @@ let data = JSON.parse(localStorage.getItem("miscFeeData") || "null") || initialD
 let editingId = null;
 let interacted = false; // 使用者是否已按下搜尋，決定是否顯示結果區塊
 let selectedIds = new Set(); // 後台批次選取的地段 id
-const ADMIN_PIN = "0000"; // 後台密碼，可自行修改
+const ADMIN_PIN = "5168"; // 後台密碼，可自行修改
 
 function render(){
   const isAdmin=document.body.classList.contains("admin-mode");
