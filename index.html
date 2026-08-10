@@ -53,6 +53,17 @@ header h1{margin:0;font-size:26px;font-weight:900;letter-spacing:.02em;position:
 /* ---------- Hero search ---------- */
 .hero{min-height:44vh;display:flex;flex-direction:column;justify-content:center}
 .hero .card{max-width:560px;margin:0 auto;width:100%;padding:26px 22px}
+
+/* ---------- Announcement ---------- */
+.announce{
+  display:none;max-width:560px;margin:0 auto 14px;background:#fff7e0;
+  border:1px solid #f4dfa0;border-radius:14px;padding:12px 16px;
+  align-items:center;gap:10px;box-shadow:var(--shadow);
+}
+.announce.show{display:flex}
+.announce-icon{font-size:18px;flex-shrink:0}
+.announce-text{flex:1;margin:0;font-size:14px;color:#7a5311;line-height:1.6;white-space:pre-wrap}
+.announce-edit-btn{flex-shrink:0;padding:8px 12px;font-size:13px}
 .badge-row{display:flex;align-items:center;gap:10px;margin-bottom:16px}
 .badge-plate{
   font-family:var(--label);font-weight:600;font-size:13px;letter-spacing:.08em;
@@ -177,6 +188,12 @@ body.admin-mode .admin-badge{display:inline-flex}
   width:100%;height:46px;border:1.5px solid var(--line);border-radius:10px;padding:0 12px;
   font-size:16px;font-family:var(--display);color:var(--ink);background:#fff;
 }
+.form-group textarea{
+  width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;
+  font-size:15px;font-family:var(--display);color:var(--ink);background:#fff;
+  resize:vertical;line-height:1.6;
+}
+.form-group textarea:focus{outline:none;border-color:var(--sea)}
 .form-group input:focus,.form-group select:focus{outline:none;border-color:var(--sea)}
 .modal-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:20px}
 
@@ -211,16 +228,22 @@ body.admin-mode .admin-badge{display:inline-flex}
 </header>
 
 <main class="container">
+  <section class="announce" id="announceCard">
+    <span class="announce-icon">📢</span>
+    <p class="announce-text" id="announceText"></p>
+    <button class="btn-light admin-only announce-edit-btn" onclick="openAnnounceModal()">✏️ 編輯公告</button>
+  </section>
+
   <section class="hero">
     <div class="card">
       <div class="badge-row">
         <span class="badge-plate">ROUTE 11</span>
-        <span class="badge-caption">輸入地區、地段名稱或段代碼，查該段差費與里程</span>
+        <span class="badge-caption">輸入地段名稱或段代碼，查該段差費與里程</span>
       </div>
       <div class="search-row">
         <div class="search-box">
           <span class="search-icon">🔎</span>
-          <input id="search" type="search" placeholder="輸入地區、地段名稱或段代碼，例如：台東市、福亨段、1047">
+          <input id="search" type="search" placeholder="輸入地區、地段或段碼，例如：台東市、福亨段、1047">
         </div>
         <button class="btn-primary btn-pill" onclick="doSearch()">搜尋</button>
         <button class="btn-primary admin-only" onclick="openModal()">＋ 新增地段</button>
@@ -297,6 +320,20 @@ body.admin-mode .admin-badge{display:inline-flex}
   </div>
 </div>
 
+<div class="modal" id="announceModal">
+  <div class="modal-box">
+    <h2>編輯公告</h2>
+    <div class="form-group">
+      <label>公告內容</label>
+      <textarea id="announceInput" rows="5" placeholder="輸入要顯示給大家看的公告內容，例如：颱風期間差費暫停調整、道路封閉繞道通知等。留空並儲存即可移除公告。"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-light" onclick="closeAnnounceModal()">取消</button>
+      <button class="btn-primary" onclick="saveAnnouncement()">儲存</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // 依鄉鎮分組的原始資料（地段, 差費金額, 里程來回）
 const rawGroups = {
@@ -346,6 +383,7 @@ for(const town in rawGroups){
 }
 
 let data = JSON.parse(localStorage.getItem("miscFeeData") || "null") || initialData;
+let announcement = localStorage.getItem("miscFeeAnnouncement") || "";
 let editingId = null;
 let interacted = false; // 使用者是否已按下搜尋，決定是否顯示結果區塊
 let selectedIds = new Set(); // 後台批次選取的地段 id
@@ -353,6 +391,7 @@ const ADMIN_PIN = "5168"; // 後台密碼，可自行修改
 
 function render(){
   const isAdmin=document.body.classList.contains("admin-mode");
+  renderAnnouncement(isAdmin);
   const resultsSection=document.getElementById("resultsSection");
   if(!interacted && !isAdmin){
     resultsSection.classList.remove("show");
@@ -446,6 +485,35 @@ function openModal(id=null){
   setTimeout(()=>document.getElementById("name").focus(),50);
 }
 function closeModal(){document.getElementById("modal").classList.remove("show");editingId=null;}
+
+// ---------- 公告 ----------
+function renderAnnouncement(isAdmin){
+  const card=document.getElementById("announceCard");
+  const textEl=document.getElementById("announceText");
+  if(announcement){
+    textEl.textContent=announcement;
+    card.classList.add("show");
+  }else if(isAdmin){
+    textEl.textContent="尚未設定公告，點右側「編輯公告」新增給大家看的訊息。";
+    card.classList.add("show");
+  }else{
+    textEl.textContent="";
+    card.classList.remove("show");
+  }
+}
+function openAnnounceModal(){
+  document.getElementById("announceInput").value=announcement;
+  document.getElementById("announceModal").classList.add("show");
+  setTimeout(()=>document.getElementById("announceInput").focus(),50);
+}
+function closeAnnounceModal(){document.getElementById("announceModal").classList.remove("show");}
+function saveAnnouncement(){
+  announcement=document.getElementById("announceInput").value.trim();
+  localStorage.setItem("miscFeeAnnouncement",announcement);
+  closeAnnounceModal();
+  render();
+}
+
 function saveItem(){
   const town=document.getElementById("town").value;
   const name=document.getElementById("name").value.trim();
@@ -521,7 +589,8 @@ document.getElementById("search").addEventListener("keydown",e=>{
   if(e.key==="Enter") doSearch();
 });
 document.getElementById("modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal();});
-document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
+document.getElementById("announceModal").addEventListener("click",e=>{if(e.target.id==="announceModal")closeAnnounceModal();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();closeAnnounceModal();}});
 render();
 </script>
 </body>
