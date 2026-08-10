@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Oswald:wght@500;600&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
 :root{
   --sand:#f7fafd; --sand-deep:#eef4fb; --ink:#334155; --muted:#8291a3;
@@ -55,15 +57,22 @@ header h1{margin:0;font-size:26px;font-weight:900;letter-spacing:.02em;position:
 .hero .card{max-width:560px;margin:0 auto;width:100%;padding:26px 22px}
 
 /* ---------- Announcement ---------- */
-.announce{
-  display:none;max-width:560px;margin:0 auto 14px;background:#fff7e0;
-  border:1px solid #f4dfa0;border-radius:14px;padding:12px 16px;
-  align-items:center;gap:10px;box-shadow:var(--shadow);
+.announce-wrap{
+  display:none;max-width:560px;margin:34px auto 6px;flex-direction:column;gap:10px;
 }
-.announce.show{display:flex}
+.announce-wrap.show{display:flex}
+.announce{
+  display:flex;background:#fff7e0;border:1px solid #f4dfa0;border-radius:14px;
+  padding:12px 16px;align-items:center;gap:10px;box-shadow:var(--shadow);
+}
+.announce.empty-hint{background:var(--sand-deep);border-style:dashed;border-color:var(--line)}
 .announce-icon{font-size:18px;flex-shrink:0}
 .announce-text{flex:1;margin:0;font-size:14px;color:#7a5311;line-height:1.6;white-space:pre-wrap}
-.announce-edit-btn{flex-shrink:0;padding:8px 12px;font-size:13px}
+.announce.empty-hint .announce-text{color:var(--muted)}
+.announce-actions{display:none;flex-shrink:0;gap:6px}
+body.admin-mode .announce-actions{display:flex}
+.announce-actions button{padding:7px 9px;font-size:12px;border-radius:8px}
+.announce-add-btn{align-self:center;padding:9px 16px;font-size:13px}
 .badge-row{display:flex;align-items:center;gap:10px;margin-bottom:16px}
 .badge-plate{
   font-family:var(--label);font-weight:600;font-size:13px;letter-spacing:.08em;
@@ -228,17 +237,16 @@ body.admin-mode .admin-badge{display:inline-flex}
 </header>
 
 <main class="container">
-  <section class="announce" id="announceCard">
-    <span class="announce-icon">📢</span>
-    <p class="announce-text" id="announceText"></p>
-    <button class="btn-light admin-only announce-edit-btn" onclick="openAnnounceModal()">✏️ 編輯公告</button>
+  <section class="announce-wrap" id="announceWrap">
+    <div class="announce-list" id="announceList"></div>
+    <button class="btn-light admin-only announce-add-btn" onclick="openAnnounceModal()">➕ 新增公告</button>
   </section>
 
   <section class="hero">
     <div class="card">
       <div class="badge-row">
         <span class="badge-plate">ROUTE 11</span>
-        <span class="badge-caption">輸入地段名稱或段代碼，查該段差費與里程</span>
+        <span class="badge-caption">輸入地區、地段或段碼，查該地區、地段差費。</span>
       </div>
       <div class="search-row">
         <div class="search-box">
@@ -322,10 +330,10 @@ body.admin-mode .admin-badge{display:inline-flex}
 
 <div class="modal" id="announceModal">
   <div class="modal-box">
-    <h2>編輯公告</h2>
+    <h2 id="announceModalTitle">新增公告</h2>
     <div class="form-group">
       <label>公告內容</label>
-      <textarea id="announceInput" rows="5" placeholder="輸入要顯示給大家看的公告內容，例如：颱風期間差費暫停調整、道路封閉繞道通知等。留空並儲存即可移除公告。"></textarea>
+      <textarea id="announceInput" rows="5" placeholder="輸入要顯示給大家看的公告內容，例如：颱風期間差費暫停調整、道路封閉繞道通知等。"></textarea>
     </div>
     <div class="modal-actions">
       <button class="btn-light" onclick="closeAnnounceModal()">取消</button>
@@ -382,12 +390,104 @@ for(const town in rawGroups){
   });
 }
 
-let data = JSON.parse(localStorage.getItem("miscFeeData") || "null") || initialData;
-let announcement = localStorage.getItem("miscFeeAnnouncement") || "";
+// ================== 雲端共用資料庫設定（Firebase） ==================
+// 請依教學到 Firebase 主控台建立專案、啟用 Realtime Database後，
+// 把下面五個值換成你自己的設定（在 Firebase 專案設定 > 一般 > 你的應用程式 裡可以複製）。
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+};
+// 是否已經填好設定（沒填的話，系統會自動退回「僅存本機」模式，行為跟以前一樣）
+const USE_CLOUD = firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY";
+let db = null;
+if(USE_CLOUD){
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+}
+function itemKey(id){ return "i"+id; }   // 加字首避免 Firebase 把數字連續 key 誤判成陣列
+function annKey(id){ return "a"+id; }
+
+// ================== 直接寫在程式碼裡的固定公告 ==================
+// 這裡的內容會「內建」在網頁檔案裡，不管誰、用什麼裝置打開網站都看得到，
+// 不需要後台登入、也不需要雲端資料庫。要新增/修改，直接改這個陣列裡的文字即可，
+// 一行一則，改完存檔、重新上傳到 GitHub 更新網站就會生效。
+const CODED_ANNOUNCEMENTS = [
+  "台東市代碼089(汽車及捷運)"
+];
+function getAllAnnouncements(){
+  const coded = CODED_ANNOUNCEMENTS.map((text,i)=>({id:"coded-"+i, text, coded:true}));
+  return [...coded, ...announcements];
+}
+// =====================================================================
+
+let data = [];
+let announcements = [];
+let editingAnnounceId = null;
 let editingId = null;
 let interacted = false; // 使用者是否已按下搜尋，決定是否顯示結果區塊
 let selectedIds = new Set(); // 後台批次選取的地段 id
-const ADMIN_PIN = "5168"; // 後台密碼，可自行修改
+const ADMIN_PIN = "0000"; // 後台密碼，可自行修改
+
+// ---------- 資料讀寫（雲端 or 本機，兩種模式共用同一組函式） ----------
+function writeItems(newArray){
+  data = newArray;
+  if(USE_CLOUD){
+    const obj={}; data.forEach(x=>obj[itemKey(x.id)]=x);
+    db.ref("items").set(obj);
+  }else{
+    localStorage.setItem("miscFeeData", JSON.stringify(data));
+    render();
+  }
+}
+function writeAnnouncements(newArray){
+  announcements = newArray;
+  if(USE_CLOUD){
+    const obj={}; announcements.forEach(a=>obj[annKey(a.id)]=a);
+    db.ref("announcements").set(obj);
+  }else{
+    localStorage.setItem("miscFeeAnnouncements", JSON.stringify(announcements));
+    render();
+  }
+}
+
+function initData(){
+  if(USE_CLOUD){
+    db.ref("items").once("value").then(snap=>{
+      if(!snap.exists()){
+        const seed={}; initialData.forEach(x=>seed[itemKey(x.id)]=x);
+        db.ref("items").set(seed);
+      }
+    });
+    db.ref("items").on("value", snap=>{
+      data = Object.values(snap.val()||{});
+      render();
+    });
+    db.ref("announcements").on("value", snap=>{
+      announcements = Object.values(snap.val()||{});
+      render();
+    });
+  }else{
+    data = JSON.parse(localStorage.getItem("miscFeeData") || "null") || initialData;
+    announcements = loadAnnouncementsLocal();
+    render();
+  }
+}
+function loadAnnouncementsLocal(){
+  const arr = JSON.parse(localStorage.getItem("miscFeeAnnouncements") || "null");
+  if(arr) return arr;
+  // 相容舊版單一公告字串，自動搬移成新格式
+  const old = localStorage.getItem("miscFeeAnnouncement");
+  if(old){
+    const migrated = [{id:Date.now(), text:old}];
+    localStorage.setItem("miscFeeAnnouncements", JSON.stringify(migrated));
+    localStorage.removeItem("miscFeeAnnouncement");
+    return migrated;
+  }
+  return [];
+}
 
 function render(){
   const isAdmin=document.body.classList.contains("admin-mode");
@@ -436,7 +536,6 @@ function render(){
     </div>`).join("");
 }
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
-function persist(){localStorage.setItem("miscFeeData",JSON.stringify(data));render();}
 
 function doSearch(){
   interacted=true;
@@ -467,9 +566,8 @@ function applyBatchPrice(){
   if(val===""){alert("請輸入要套用的差費金額");return}
   if(!selectedIds.size){alert("請先選取要修改的地段");return}
   const price=Number(val);
-  data=data.map(x=>selectedIds.has(x.id)?{...x,price}:x);
+  writeItems(data.map(x=>selectedIds.has(x.id)?{...x,price}:x));
   document.getElementById("batchPrice").value="";
-  persist();
 }
 
 function openModal(id=null){
@@ -486,32 +584,59 @@ function openModal(id=null){
 }
 function closeModal(){document.getElementById("modal").classList.remove("show");editingId=null;}
 
-// ---------- 公告 ----------
+// ---------- 公告（可多筆：程式碼內建 + 後台新增） ----------
 function renderAnnouncement(isAdmin){
-  const card=document.getElementById("announceCard");
-  const textEl=document.getElementById("announceText");
-  if(announcement){
-    textEl.textContent=announcement;
-    card.classList.add("show");
-  }else if(isAdmin){
-    textEl.textContent="尚未設定公告，點右側「編輯公告」新增給大家看的訊息。";
-    card.classList.add("show");
-  }else{
-    textEl.textContent="";
-    card.classList.remove("show");
+  const wrap=document.getElementById("announceWrap");
+  const list=document.getElementById("announceList");
+  const all=getAllAnnouncements();
+  if(!all.length && !isAdmin){
+    wrap.classList.remove("show");
+    list.innerHTML="";
+    return;
   }
+  wrap.classList.add("show");
+  if(!all.length){
+    list.innerHTML='<div class="announce empty-hint"><span class="announce-icon">📢</span><p class="announce-text">尚未設定公告，點下方「新增公告」新增給大家看的訊息。</p></div>';
+    return;
+  }
+  list.innerHTML=all.map(a=>`
+    <div class="announce">
+      <span class="announce-icon">📢</span>
+      <p class="announce-text">${esc(a.text)}</p>
+      ${a.coded?'':`
+      <div class="announce-actions admin-only">
+        <button class="btn-light" onclick="openAnnounceModal(${a.id})">✏️</button>
+        <button class="btn-danger" onclick="deleteAnnounce(${a.id})">🗑️</button>
+      </div>`}
+    </div>`).join("");
 }
-function openAnnounceModal(){
-  document.getElementById("announceInput").value=announcement;
+function openAnnounceModal(id=null){
+  editingAnnounceId=id;
+  const a=id?announcements.find(v=>v.id===id):null;
+  document.getElementById("announceModalTitle").textContent=id?"編輯公告":"新增公告";
+  document.getElementById("announceInput").value=a?a.text:"";
   document.getElementById("announceModal").classList.add("show");
   setTimeout(()=>document.getElementById("announceInput").focus(),50);
 }
-function closeAnnounceModal(){document.getElementById("announceModal").classList.remove("show");}
+function closeAnnounceModal(){document.getElementById("announceModal").classList.remove("show");editingAnnounceId=null;}
 function saveAnnouncement(){
-  announcement=document.getElementById("announceInput").value.trim();
-  localStorage.setItem("miscFeeAnnouncement",announcement);
+  const text=document.getElementById("announceInput").value.trim();
+  if(!text){alert("請輸入公告內容");return}
+  let next;
+  if(editingAnnounceId){
+    next=announcements.map(a=>a.id===editingAnnounceId?{...a,text}:a);
+  }else{
+    next=[...announcements,{id:Date.now(),text}];
+  }
+  writeAnnouncements(next);
   closeAnnounceModal();
-  render();
+}
+function deleteAnnounce(id){
+  const a=announcements.find(v=>v.id===id);
+  if(!a)return;
+  if(confirm("確定要刪除這則公告嗎？")){
+    writeAnnouncements(announcements.filter(v=>v.id!==id));
+  }
 }
 
 function saveItem(){
@@ -523,19 +648,22 @@ function saveItem(){
   if(!name){alert("請輸入地段名稱");return}
   if(priceVal===""){alert("請輸入差費金額");return}
   const item={town,name,code:code===""?null:code,price:Number(priceVal),distance:distVal===""?null:Number(distVal)};
+  let next;
   if(editingId){
-    const i=data.findIndex(x=>x.id===editingId); data[i]={...data[i],...item};
+    next=data.map(x=>x.id===editingId?{...x,...item}:x);
   }else{
-    data.push({id:Date.now(),...item});
+    next=[...data,{id:Date.now(),...item}];
   }
-  persist(); closeModal();
+  writeItems(next);
+  closeModal();
 }
 function editItem(id){openModal(id)}
 function deleteItem(id){
   const x=data.find(v=>v.id===id);
   if(!x)return;
   if(confirm(`確定要刪除「${x.name}」嗎？`)){
-    data=data.filter(v=>v.id!==id); selectedIds.delete(id); persist();
+    selectedIds.delete(id);
+    writeItems(data.filter(v=>v.id!==id));
   }
 }
 function exportData(){
@@ -550,7 +678,7 @@ function importData(e){
     try{
       const incoming=JSON.parse(reader.result);
       if(!Array.isArray(incoming))throw new Error();
-      data=incoming.map((x,i)=>({
+      const next=incoming.map((x,i)=>({
         id:x.id||Date.now()+i,
         town:x.town||"成功鎮",
         name:String(x.name||"").trim(),
@@ -559,7 +687,8 @@ function importData(e){
         distance:x.distance==null||x.distance===""?null:Number(x.distance)
       })).filter(x=>x.name);
       selectedIds.clear();
-      persist(); alert("匯入完成！共 "+data.length+" 筆資料。");
+      writeItems(next);
+      alert("匯入完成！共 "+next.length+" 筆資料。"+(USE_CLOUD?"已同步到雲端，所有裝置都會看到。":""));
     }catch(err){alert("檔案格式不正確，請使用本系統匯出的 JSON 檔。")}
     e.target.value="";
   };
@@ -591,7 +720,7 @@ document.getElementById("search").addEventListener("keydown",e=>{
 document.getElementById("modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal();});
 document.getElementById("announceModal").addEventListener("click",e=>{if(e.target.id==="announceModal")closeAnnounceModal();});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();closeAnnounceModal();}});
-render();
+initData();
 </script>
 </body>
 </html>
