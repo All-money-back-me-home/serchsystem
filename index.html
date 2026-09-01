@@ -39,15 +39,15 @@ header .eyebrow{
 header h1{margin:0;font-size:26px;font-weight:900;letter-spacing:.02em;position:relative;z-index:1}
 .header-wave{position:absolute;left:0;right:0;bottom:-1px;line-height:0}
 .header-wave svg{width:100%;height:56px;display:block}
-.container{max-width:960px;margin:-28px auto 44px;padding:0 16px;position:relative}
+.container{max-width:960px;margin:-28px auto 24px;padding:0 16px;position:relative}
 .card{
   background:var(--card);border-radius:20px;box-shadow:var(--shadow);
   border:1px solid var(--line);padding:20px;margin-bottom:16px;
 }
-.hero{min-height:40vh;display:flex;flex-direction:column;justify-content:center}
-.hero .card{max-width:560px;margin:0 auto;width:100%;padding:26px 22px}
+.hero{display:flex;flex-direction:column;justify-content:center;margin-top:10px}
+.hero .card{max-width:560px;margin:0 auto;width:100%;padding:22px 22px}
 .announce-wrap{
-  display:none;max-width:560px;margin:34px auto 6px;flex-direction:column;gap:10px;
+  display:none;max-width:560px;margin:12px auto 0;flex-direction:column;gap:8px;
 }
 .announce-wrap.show{display:flex}
 .announce{
@@ -72,12 +72,31 @@ header h1{margin:0;font-size:26px;font-weight:900;letter-spacing:.02em;position:
 }
 .search-box input::placeholder{color:#9aa39d}
 .search-box input:focus{border-color:var(--sea);box-shadow:0 0 0 4px rgba(0,71,187,.15)}
+.autocomplete{
+  position:absolute;left:0;right:0;top:60px;z-index:20;display:none;
+  background:#fff;border:1px solid var(--line);border-radius:16px;
+  box-shadow:0 16px 34px rgba(0,71,187,.16);overflow:hidden;
+}
+.autocomplete.show{display:block}
+.suggestion{
+  width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 15px;border:0;border-bottom:1px solid #eef3f8;border-radius:0;
+  background:#fff;text-align:left;color:var(--ink);font-family:var(--display);cursor:pointer;
+}
+.suggestion:last-child{border-bottom:0}
+.suggestion:hover,.suggestion.active{background:#f1f6ff}
+.suggestion.exact{background:#e7f0ff;box-shadow:inset 4px 0 0 var(--sea-deep)}
+.suggestion-main{min-width:0;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700}
+.suggestion-main strong{font-weight:900}
+.suggestion-meta{flex-shrink:0;color:var(--muted);font-size:11px}
+.suggestion mark{background:#ffe58a;color:inherit;border-radius:3px;padding:0 1px}
+.suggestion.exact mark{background:#9fc2ff}
 .search-icon{position:absolute;left:19px;top:16px;font-size:19px;color:var(--muted)}
 button{border:0;border-radius:12px;padding:12px 18px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--display)}
 .btn-primary{background:var(--sea-deep);color:#fff}
 .btn-primary:hover{background:#003a99}
 .btn-pill{border-radius:999px;height:54px;padding:0 30px}
-.hint{margin:12px 2px 0;font-size:12.5px;color:var(--muted)}
+.hint{margin:10px 2px 0;font-size:12px;color:var(--muted)}
 #resultsSection{display:none}
 #resultsSection.show{display:block}
 .section-label{
@@ -121,7 +140,10 @@ button{border:0;border-radius:12px;padding:12px 18px;font-size:15px;font-weight:
   header h1{font-size:22px}
   .container{padding:0 12px}
   .card{padding:16px;border-radius:16px}
-  .hero .card{padding:20px 16px}
+  .hero .card{padding:18px 16px}
+  .announce-wrap{margin-top:8px}
+  .autocomplete{top:59px}
+  .suggestion{padding:11px 13px}
   .search-row button{flex:1}
   .ticket-bottom{flex-direction:column;gap:12px}
   .ticket-fee,.ticket-extra{border-right:0;border-bottom:1px solid var(--line);padding-bottom:10px}
@@ -155,11 +177,12 @@ button{border:0;border-radius:12px;padding:12px 18px;font-size:15px;font-weight:
       <div class="search-row">
         <div class="search-box">
           <span class="search-icon">🔎</span>
-          <input id="search" type="search" placeholder="輸入地區、地段或段碼，例如：台東市、福亨段、1047">
+          <input id="search" type="search" autocomplete="off" placeholder="輸入地區、地段或段碼，例如：台東市、福亨段、1047">
+          <div class="autocomplete" id="autocomplete" role="listbox"></div>
         </div>
         <button class="btn-primary btn-pill" onclick="doSearch()">搜尋</button>
       </div>
-      <p class="hint">輸入後按「搜尋」或 Enter 鍵即可查詢</p>
+      <p class="hint">輸入關鍵字即時顯示結果，可點選下方選項；也可按 Enter 查詢</p>
     </div>
   </section>
 
@@ -177,6 +200,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzKzIiXl7bNtTzHUWdDIkE8
 let data = [];
 let announcements = [];
 let interacted = false;
+let activeSuggestion = -1;
 
 async function loadData(){
   try{
@@ -214,13 +238,15 @@ function render(){
   }
 
   const resultsSection = document.getElementById("resultsSection");
+  const qRaw = document.getElementById("search").value.trim();
+  const q = qRaw.toLowerCase();
+  interacted = q.length > 0;
   if(!interacted){
     resultsSection.classList.remove("show");
+    hideSuggestions();
     return;
   }
   resultsSection.classList.add("show");
-
-  const q = document.getElementById("search").value.trim().toLowerCase();
   const filtered = data.filter(x =>
     (x.name||"").toLowerCase().includes(q) ||
     (x.town||"").toLowerCase().includes(q) ||
@@ -296,13 +322,117 @@ function render(){
 
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
 
+function normalize(s){
+  return String(s ?? "").trim().toLowerCase();
+}
+
+function highlight(text, q){
+  const safe = esc(text);
+  if(!q) return safe;
+  const safeQ = esc(q).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  try{
+    return safe.replace(new RegExp(`(${safeQ})`, "gi"), "<mark>$1</mark>");
+  }catch(e){ return safe; }
+}
+
+function getSuggestions(q){
+  const query = normalize(q);
+  if(!query) return [];
+  const seen = new Set();
+  return data.filter(x => {
+    const name=normalize(x.name), town=normalize(x.town), code=normalize(x.code);
+    return name.includes(query) || town.includes(query) || code.includes(query);
+  }).filter(x => {
+    const key = `${x.name}|${x.town}|${x.code}`;
+    if(seen.has(key)) return false;
+    seen.add(key); return true;
+  }).sort((a,b)=>{
+    const qa=query;
+    const ae = [a.name,a.town,String(a.code||"")].some(v=>normalize(v)===qa);
+    const be = [b.name,b.town,String(b.code||"")].some(v=>normalize(v)===qa);
+    return Number(be)-Number(ae);
+  }).slice(0,8);
+}
+
+function showSuggestions(){
+  const input=document.getElementById("search");
+  const box=document.getElementById("autocomplete");
+  const q=input.value.trim();
+  activeSuggestion=-1;
+  if(!q || !data.length){ hideSuggestions(); return; }
+  const items=getSuggestions(q);
+  if(!items.length){ hideSuggestions(); return; }
+  box.innerHTML=items.map((x,i)=>{
+    const exact=[x.name,x.town,String(x.code||"")].some(v=>normalize(v)===normalize(q));
+    const meta=[x.town, x.code ? `段碼 ${x.code}` : ""].filter(Boolean).join(" · ");
+    return `<button type="button" class="suggestion ${exact?"exact":""}" data-index="${i}" onclick="chooseSuggestion(${i})">
+      <span class="suggestion-main">🔎 <strong>${highlight(x.name||"",q)}</strong></span>
+      <span class="suggestion-meta">${highlight(meta,q)}${exact?" ✓":""}</span>
+    </button>`;
+  }).join("");
+  box.classList.add("show");
+  box._items=items;
+}
+
+function hideSuggestions(){
+  const box=document.getElementById("autocomplete");
+  if(box){box.classList.remove("show");box.innerHTML="";box._items=[];}
+  activeSuggestion=-1;
+}
+
+function chooseSuggestion(index){
+  const box=document.getElementById("autocomplete");
+  const items=box._items||[];
+  const item=items[index];
+  if(!item) return;
+  document.getElementById("search").value=item.name || item.town || String(item.code||"");
+  activeSuggestion=-1;
+  hideSuggestions();
+  interacted=true;
+  render();
+  document.getElementById("search").focus();
+}
+
 function doSearch(){
-  interacted = true;
+  interacted = document.getElementById("search").value.trim().length > 0;
+  hideSuggestions();
   render();
 }
 
+document.getElementById("search").addEventListener("input", () => {
+  interacted = document.getElementById("search").value.trim().length > 0;
+  render();
+  showSuggestions();
+});
+
 document.getElementById("search").addEventListener("keydown", e => {
-  if(e.key === "Enter") doSearch();
+  const box=document.getElementById("autocomplete");
+  const items=box._items||[];
+  if(e.key === "ArrowDown" && items.length){
+    e.preventDefault();
+    activeSuggestion=(activeSuggestion+1)%items.length;
+    box.querySelectorAll(".suggestion").forEach((el,i)=>el.classList.toggle("active",i===activeSuggestion));
+    return;
+  }
+  if(e.key === "ArrowUp" && items.length){
+    e.preventDefault();
+    activeSuggestion=(activeSuggestion-1+items.length)%items.length;
+    box.querySelectorAll(".suggestion").forEach((el,i)=>el.classList.toggle("active",i===activeSuggestion));
+    return;
+  }
+  if(e.key === "Enter"){
+    if(activeSuggestion>=0 && items[activeSuggestion]){
+      e.preventDefault();
+      chooseSuggestion(activeSuggestion);
+    }else{
+      doSearch();
+    }
+  }
+  if(e.key === "Escape") hideSuggestions();
+});
+
+document.addEventListener("click", e => {
+  if(!e.target.closest(".search-box")) hideSuggestions();
 });
 
 loadData();
