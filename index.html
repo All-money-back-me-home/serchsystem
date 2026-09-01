@@ -8,8 +8,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Oswald:wght@500;600&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
 :root{
   --sand:#f7fafd; --sand-deep:#eef4fb; --ink:#334155; --muted:#8291a3;
@@ -30,7 +28,6 @@ body{
 }
 ::selection{background:var(--sun);color:#231a08}
 
-/* ---------- Header ---------- */
 header{
   position:relative;overflow:hidden;
   background:linear-gradient(160deg,var(--sea-deep) 0%,var(--sea) 62%,#bcdcfb 100%);
@@ -46,17 +43,14 @@ header h1{margin:0;font-size:26px;font-weight:900;letter-spacing:.02em;position:
 
 .container{max-width:960px;margin:-28px auto 44px;padding:0 16px;position:relative}
 
-/* ---------- Cards ---------- */
 .card{
   background:var(--card);border-radius:20px;box-shadow:var(--shadow);
   border:1px solid var(--line);padding:20px;margin-bottom:16px;
 }
 
-/* ---------- Hero search ---------- */
 .hero{min-height:44vh;display:flex;flex-direction:column;justify-content:center}
 .hero .card{max-width:560px;margin:0 auto;width:100%;padding:26px 22px}
 
-/* ---------- Announcement ---------- */
 .announce-wrap{
   display:none;max-width:560px;margin:34px auto 6px;flex-direction:column;gap:10px;
 }
@@ -105,7 +99,6 @@ button:focus-visible, input:focus-visible, select:focus-visible{outline:3px soli
 .stat{background:var(--sand-deep);border-radius:12px;padding:9px 13px;font-size:13px;color:var(--muted)}
 .stat b{color:var(--ink);font-size:16px;margin-right:3px;font-family:var(--mono)}
 
-/* ---------- Results: ticket stubs ---------- */
 #resultsSection{display:none}
 #resultsSection.show{display:block}
 .section-label{
@@ -136,7 +129,7 @@ button:focus-visible, input:focus-visible, select:focus-visible{outline:3px soli
 .ticket-perf{height:14px;margin:0;overflow:hidden;line-height:0}
 .ticket-perf svg{width:100%;height:14px;display:block}
 .ticket-bottom{display:flex;padding:14px 20px 17px;gap:10px}
-.ticket-fee,.ticket-dist{flex:1}
+.ticket-fee,.ticket-dist,.ticket-extra{flex:1}
 .ticket-label{
   display:block;font-family:var(--label);font-weight:500;font-size:10.5px;
   letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;
@@ -144,12 +137,13 @@ button:focus-visible, input:focus-visible, select:focus-visible{outline:3px soli
 .ticket-value{font-family:var(--mono);font-weight:700;font-size:21px;color:var(--sea-deep)}
 .ticket-dist .ticket-value{color:var(--ink);font-size:18px}
 .ticket-fee{border-right:1px solid var(--line)}
+.ticket-extra{border-right:1px solid var(--line)}
+.ticket-extra:last-child{border-right:0}
 .ticket-actions{display:flex;gap:7px}
 .action-btn{padding:8px 11px;font-size:13px;border-radius:9px}
 .empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:15px}
 .ticket.selected{border-color:var(--sea-deep);box-shadow:0 0 0 3px rgba(0,71,187,.14)}
 
-/* ---------- Batch edit bar ---------- */
 .batch-bar{
   display:none;position:sticky;top:10px;z-index:12;background:var(--sea-deep);color:#fff;
   border-radius:16px;padding:12px 16px;margin-bottom:14px;align-items:center;gap:10px;
@@ -165,7 +159,6 @@ button:focus-visible, input:focus-visible, select:focus-visible{outline:3px soli
 .batch-bar .btn-apply{background:var(--sun);color:#0d3b23}
 .batch-bar .btn-clear{background:rgba(255,255,255,.18);color:#fff}
 
-/* ---------- Admin ---------- */
 .admin-only{display:none}
 body.admin-mode .admin-only{display:revert}
 body.admin-mode .ticket-actions{display:flex}
@@ -186,7 +179,6 @@ body.admin-mode .admin-badge{display:inline-flex}
 }
 .admin-fab.on{background:var(--sun);opacity:1}
 
-/* ---------- Modal ---------- */
 .modal{position:fixed;inset:0;background:rgba(8,26,30,.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:20}
 .modal.show{display:flex}
 .modal-box{width:min(500px,100%);background:#fff;border-radius:20px;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.28)}
@@ -206,6 +198,8 @@ body.admin-mode .admin-badge{display:inline-flex}
 .form-group input:focus,.form-group select:focus{outline:none;border-color:var(--sea)}
 .modal-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:20px}
 
+.loading{text-align:center;padding:40px;color:var(--muted)}
+
 @media(prefers-reduced-motion:reduce){
   .ticket{animation:none}
   *{transition:none!important}
@@ -218,7 +212,8 @@ body.admin-mode .admin-badge{display:inline-flex}
   .hero .card{padding:20px 16px}
   .search-row button{flex:1}
   .ticket-bottom{flex-direction:column;gap:12px}
-  .ticket-fee{border-right:0;border-bottom:1px solid var(--line);padding-bottom:10px}
+  .ticket-fee,.ticket-extra{border-right:0;border-bottom:1px solid var(--line);padding-bottom:10px}
+  .ticket-extra:last-child{border-bottom:0;padding-bottom:0}
   .batch-bar{flex-direction:column;align-items:stretch}
   .batch-bar input,.batch-bar button{width:100%}
 }
@@ -274,15 +269,16 @@ body.admin-mode .admin-badge{display:inline-flex}
         <button class="btn-light" onclick="exportData()">⬇ 匯出資料</button>
         <button class="btn-light" onclick="document.getElementById('importFile').click()">⬆ 匯入資料</button>
         <input id="importFile" class="file-input" type="file" accept=".json" onchange="importData(event)">
+        <button class="btn-light" onclick="reloadFromCloud()">↻ 重新從試算表載入</button>
       </div>
     </div>
-    <p class="note">資料會儲存在目前裝置的瀏覽器中。若換手機或清除瀏覽器資料，請先匯出備份。匯入的 JSON 若含有「code」段碼欄位會一併保留。</p>
+    <p class="note">資料來源：Google 試算表。可直接在試算表新增／修改／刪除，然後按「重新從試算表載入」即可同步。</p>
   </section>
 
   <section id="resultsSection">
     <div class="batch-bar admin-only" id="batchBar">
       <span class="batch-count"><b id="selCount">0</b> 筆已選取</span>
-      <input id="batchPrice" type="number" min="0" step="1" placeholder="輸入差費金額">
+      <input id="batchPrice" type="number" min="0" step="1" placeholder="輸入差費／雜費金額">
       <button class="btn-apply" onclick="applyBatchPrice()">套用到已選地段</button>
       <button class="btn-clear" onclick="clearSelection()">取消選取</button>
     </div>
@@ -302,7 +298,7 @@ body.admin-mode .admin-badge{display:inline-flex}
         <option value="成功鎮">成功鎮</option>
         <option value="長濱鄉">長濱鄉</option>
         <option value="東河鄉">東河鄉</option>
-        <option value="其他">其他</option>
+        <option value="轄區外">轄區外</option>
       </select>
     </div>
     <div class="form-group">
@@ -313,13 +309,21 @@ body.admin-mode .admin-badge{display:inline-flex}
       <label>段碼</label>
       <input id="code" placeholder="例如：100（地政段代碼，非必填）">
     </div>
-    <div class="form-group">
-      <label>差費金額（元）*</label>
+    <div class="form-group" id="groupPrice">
+      <label id="priceLabel">差費金額（元）*</label>
       <input id="price" type="number" min="0" step="1" placeholder="例如：130">
     </div>
-    <div class="form-group">
+    <div class="form-group" id="groupDistance">
       <label>里程</label>
       <input id="distance" type="number" min="0" step="1" placeholder="例如：58">
+    </div>
+    <div class="form-group" id="groupBus" style="display:none">
+      <label>客運金額（元）</label>
+      <input id="bus" type="number" min="0" step="1" placeholder="例如：220">
+    </div>
+    <div class="form-group" id="groupTrain" style="display:none">
+      <label>火車金額（元）</label>
+      <input id="train" type="number" min="0" step="1" placeholder="例如：180">
     </div>
     <div class="modal-actions">
       <button class="btn-light" onclick="closeModal()">取消</button>
@@ -333,7 +337,7 @@ body.admin-mode .admin-badge{display:inline-flex}
     <h2 id="announceModalTitle">新增公告</h2>
     <div class="form-group">
       <label>公告內容</label>
-      <textarea id="announceInput" rows="5" placeholder="輸入要顯示給大家看的公告內容，例如：颱風期間差費暫停調整、道路封閉繞道通知等。"></textarea>
+      <textarea id="announceInput" rows="5" placeholder="輸入要顯示給大家看的公告內容"></textarea>
     </div>
     <div class="modal-actions">
       <button class="btn-light" onclick="closeAnnounceModal()">取消</button>
@@ -343,230 +347,109 @@ body.admin-mode .admin-badge{display:inline-flex}
 </div>
 
 <script>
-// 目前段代碼與差費金額資料（由使用者提供的備份 JSON 直接寫入程式碼）
-const initialData = [
-  {id:1, town:"成功鎮", name:"宜灣小段", code:"100", price:130, distance:35},
-  {id:2, town:"成功鎮", name:"重安小段", code:"101", price:130, distance:40},
-  {id:3, town:"成功鎮", name:"石傘小段", code:"102", price:130, distance:40},
-  {id:4, town:"成功鎮", name:"小港小段", code:"103", price:130, distance:15},
-  {id:5, town:"成功鎮", name:"美山小段", code:"104", price:130, distance:25},
-  {id:6, town:"成功鎮", name:"白蓮小段", code:"105", price:130, distance:15},
-  {id:7, town:"成功鎮", name:"芝田小段", code:"106", price:130, distance:15},
-  {id:8, town:"成功鎮", name:"新港小段(山區)", code:"107", price:130, distance:null},
-  {id:13, town:"成功鎮", name:"小馬", code:"112", price:130, distance:40},
-  {id:14, town:"成功鎮", name:"忠仁", code:"133", price:0, distance:null},
-  {id:15, town:"成功鎮", name:"忠智", code:"134", price:0, distance:null},
-  {id:16, town:"成功鎮", name:"忠勇", code:"135", price:0, distance:null},
-  {id:17, town:"成功鎮", name:"三民", code:"136", price:0, distance:null},
-  {id:18, town:"成功鎮", name:"成功", code:"137", price:0, distance:null},
-  {id:19, town:"成功鎮", name:"高台", code:"153", price:130, distance:null},
-  {id:20, town:"成功鎮", name:"三仙", code:"154", price:130, distance:null},
-  {id:21, town:"成功鎮", name:"坪頂", code:"155", price:130, distance:null},
-  {id:22, town:"成功鎮", name:"仙民", code:"156", price:0, distance:null},
-  {id:23, town:"成功鎮", name:"仙民山區", code:"156", price:130, distance:null},
-  {id:24, town:"成功鎮", name:"富民", code:"157", price:0, distance:null},
-  {id:25, town:"成功鎮", name:"小馬東", code:"181", price:130, distance:null},
-  {id:26, town:"成功鎮", name:"南都歷", code:"182", price:130, distance:null},
-  {id:27, town:"成功鎮", name:"北都歷", code:"183", price:130, distance:null},
-  {id:28, town:"成功鎮", name:"都豐", code:"184", price:130, distance:null},
-  {id:29, town:"成功鎮", name:"和平南", code:"185", price:130, distance:null},
-  {id:30, town:"成功鎮", name:"和平北", code:"186", price:130, distance:null},
-  {id:31, town:"成功鎮", name:"新都威", code:"1029", price:130, distance:null},
-  {id:32, town:"成功鎮", name:"玉港", code:"1030", price:130, distance:null},
-  {id:33, town:"成功鎮", name:"新美山", code:"1031", price:130, distance:null},
-  {id:34, town:"成功鎮", name:"沙泥灣", code:"1032", price:130, distance:null},
-  {id:35, town:"成功鎮", name:"新八邊", code:"1043", price:130, distance:null},
-  {id:36, town:"成功鎮", name:"麒麟", code:"1044", price:0, distance:null},
-  {id:37, town:"東河鄉", name:"高原", code:"113", price:130, distance:null},
-  {id:38, town:"東河鄉", name:"北源", code:"114", price:200, distance:null},
-  {id:39, town:"東河鄉", name:"大馬", code:"115", price:130, distance:null},
-  {id:40, town:"東河鄉", name:"都蘭", code:"118", price:200, distance:null},
-  {id:41, town:"東河鄉", name:"萬年", code:"132", price:200, distance:null},
-  {id:42, town:"東河鄉", name:"東河", code:"147", price:130, distance:null},
-  {id:43, town:"東河鄉", name:"南河", code:"148", price:130, distance:null},
-  {id:44, town:"東河鄉", name:"七里", code:"158", price:130, distance:null},
-  {id:45, town:"東河鄉", name:"興隆", code:"159", price:130, distance:null},
-  {id:46, town:"東河鄉", name:"興昌", code:"160", price:200, distance:null},
-  {id:47, town:"東河鄉", name:"藍寶", code:"161", price:200, distance:null},
-  {id:48, town:"東河鄉", name:"那界", code:"162", price:200, distance:null},
-  {id:49, town:"東河鄉", name:"濁水", code:"163", price:200, distance:null},
-  {id:50, town:"東河鄉", name:"中興", code:"164", price:200, distance:null},
-  {id:51, town:"東河鄉", name:"烏心石", code:"165", price:200, distance:null},
-  {id:52, town:"東河鄉", name:"銅礦", code:"166", price:200, distance:null},
-  {id:53, town:"東河鄉", name:"北佳里", code:"177", price:130, distance:null},
-  {id:54, town:"東河鄉", name:"南佳里", code:"178", price:130, distance:null},
-  {id:55, town:"東河鄉", name:"北八里", code:"179", price:200, distance:null},
-  {id:56, town:"東河鄉", name:"南八里", code:"180", price:200, distance:null},
-  {id:57, town:"東河鄉", name:"北都蘭", code:"1039", price:200, distance:null},
-  {id:58, town:"東河鄉", name:"南都蘭", code:"1040", price:200, distance:null},
-  {id:59, town:"東河鄉", name:"阿都蘭", code:"1041", price:200, distance:null},
-  {id:60, town:"東河鄉", name:"新大馬", code:"1042", price:130, distance:null},
-  {id:61, town:"東河鄉", name:"瑪屋撈外(南溪)", code:"1046", price:200, distance:null},
-  {id:62, town:"東河鄉", name:"福亭", code:"1047", price:130, distance:null},
-  {id:63, town:"東河鄉", name:"金都來", code:"1002", price:200, distance:null},
-  {id:64, town:"長濱鄉", name:"大峰峰小段", code:"119", price:200, distance:null},
-  {id:65, town:"長濱鄉", name:"姑仔律小段", code:"120", price:200, distance:null},
-  {id:66, town:"長濱鄉", name:"大來小段", code:"121", price:200, distance:null},
-  {id:67, town:"長濱鄉", name:"三間小段", code:"122", price:200, distance:null},
-  {id:68, town:"長濱鄉", name:"真柄", code:"123", price:200, distance:null},
-  {id:69, town:"長濱鄉", name:"長濱", code:"124", price:130, distance:null},
-  {id:70, town:"長濱鄉", name:"掃別小段", code:"125", price:130, distance:null},
-  {id:71, town:"長濱鄉", name:"竹湖小段", code:"126", price:130, distance:null},
-  {id:72, town:"長濱鄉", name:"彭仔存", code:"127", price:130, distance:null},
-  {id:73, town:"長濱鄉", name:"八桑安小段", code:"128", price:130, distance:null},
-  {id:74, town:"長濱鄉", name:"僅那鹿角小段", code:"129", price:130, distance:null},
-  {id:75, town:"長濱鄉", name:"石寧埔小段", code:"130", price:130, distance:null},
-  {id:76, town:"長濱鄉", name:"膽曼小段", code:"131", price:130, distance:null},
-  {id:77, town:"長濱鄉", name:"長光", code:"149", price:200, distance:null},
-  {id:78, town:"長濱鄉", name:"濱海", code:"150", price:130, distance:null},
-  {id:79, town:"長濱鄉", name:"仰光", code:"151", price:130, distance:null},
-  {id:80, town:"長濱鄉", name:"黃金橋", code:"167", price:200, distance:null},
-  {id:81, town:"長濱鄉", name:"八仙洞", code:"168", price:200, distance:null},
-  {id:82, town:"長濱鄉", name:"大俱來", code:"169", price:200, distance:null},
-  {id:83, town:"長濱鄉", name:"大霸來", code:"170", price:200, distance:null},
-  {id:84, town:"長濱鄉", name:"三間屋", code:"171", price:200, distance:null},
-  {id:85, town:"長濱鄉", name:"東柄", code:"172", price:200, distance:null},
-  {id:86, town:"長濱鄉", name:"中柄", code:"173", price:200, distance:null},
-  {id:87, town:"長濱鄉", name:"馬稜海", code:"174", price:200, distance:null},
-  {id:88, town:"長濱鄉", name:"城仔埔", code:"175", price:200, distance:null},
-  {id:89, town:"長濱鄉", name:"加走灣", code:"176", price:200, distance:null},
-  {id:90, town:"長濱鄉", name:"烏石鼻", code:"1033", price:130, distance:null},
-  {id:91, town:"長濱鄉", name:"玉長", code:"1034", price:130, distance:null},
-  {id:92, town:"長濱鄉", name:"八桑灣", code:"1035", price:130, distance:null},
-  {id:93, town:"長濱鄉", name:"新竹湖", code:"1036", price:130, distance:null},
-  {id:94, town:"長濱鄉", name:"永福", code:"1037", price:130, distance:null},
-  {id:95, town:"長濱鄉", name:"田組", code:"1038", price:130, distance:null},
-  {id:96, town:"長濱鄉", name:"石坑", code:"1045", price:130, distance:null},
-  {id:97, town:"長濱鄉", name:"馬拿醠嗨", code:"1017", price:200, distance:null},
-  {id:1786326649238, town:"長濱鄉", name:"長濱(忠勇)", code:"0124", price:200, distance:null},
-  {id:1786326811614, town:"東河鄉", name:"瑪屋撈外(尚德)", code:"1046", price:200, distance:null},
-  {id:1786326935390, town:"東河鄉", name:"瑪屋撈外", code:"1046", price:130, distance:null},
-  {id:1786329045348, town:"其他", name:"臺東(汽車、捷運)", code:null, price:334, distance:null},
-  {id:1786329364411, town:"其他", name:"台東市(汽車及捷運)", code:"089", price:334, distance:null},
-  {id:1786329364412, town:"其他", name:"關山鎮(汽車及捷運)", code:"089", price:514, distance:null},
-];
+// ========== 請把下面網址換成你部署後的 Apps Script 網址 ==========
+const API_URL = "https://script.google.com/macros/s/AKfycbzKzIiXl7bNtTzHUWdDIkE8OsTAIXXJqwBDwvBt77PJpVKm_dJ6z0RTjMemYEZWBvwe/exec";
+// =================================================================
 
-// ================== 雲端共用資料庫設定（Firebase） ==================
-// 請依教學到 Firebase 主控台建立專案、啟用 Realtime Database後，
-// 把下面五個值換成你自己的設定（在 Firebase 專案設定 > 一般 > 你的應用程式 裡可以複製）。
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-};
-// 是否已經填好設定（沒填的話，系統會自動退回「僅存本機」模式，行為跟以前一樣）
-const USE_CLOUD = firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY";
-let db = null;
-if(USE_CLOUD){
-  firebase.initializeApp(firebaseConfig);
-  db = firebase.database();
-}
-function itemKey(id){ return "i"+id; }   // 加字首避免 Firebase 把數字連續 key 誤判成陣列
-function annKey(id){ return "a"+id; }
-
-// ================== 直接寫在程式碼裡的固定公告 ==================
-// 這裡的內容會「內建」在網頁檔案裡，不管誰、用什麼裝置打開網站都看得到，
-// 不需要後台登入、也不需要雲端資料庫。要新增/修改，直接改這個陣列裡的文字即可，
-// 一行一則，改完存檔、重新上傳到 GitHub 更新網站就會生效。
 const CODED_ANNOUNCEMENTS = [
   "台東市、關山鎮(汽車及捷運)代碼089"
 ];
-function getAllAnnouncements(){
-  const coded = CODED_ANNOUNCEMENTS.map((text,i)=>({id:"coded-"+i, text, coded:true}));
-  return [...coded, ...announcements];
-}
-// =====================================================================
 
 let data = [];
 let announcements = [];
 let editingAnnounceId = null;
 let editingId = null;
-let interacted = false; // 使用者是否已按下搜尋，決定是否顯示結果區塊
-let selectedIds = new Set(); // 後台批次選取的地段 id
-const ADMIN_PIN = "0000"; // 後台密碼，可自行修改
+let interacted = false;
+let selectedIds = new Set();
+const ADMIN_PIN = "0000";
 
-// ---------- 資料讀寫（雲端 or 本機，兩種模式共用同一組函式） ----------
+function getAllAnnouncements(){
+  const coded = CODED_ANNOUNCEMENTS.map((text,i)=>({id:"coded-"+i, text, coded:true}));
+  return [...coded, ...announcements];
+}
+
+// ---------- API 呼叫 ----------
+async function apiGet(){
+  const res = await fetch(API_URL + "?action=list");
+  if(!res.ok) throw new Error("讀取失敗");
+  return await res.json();
+}
+
+async function apiPost(payload){
+  const res = await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+  if(!res.ok) throw new Error("寫入失敗");
+  return await res.json();
+}
+
+async function loadData(){
+  try{
+    document.getElementById("tbody").innerHTML = '<div class="loading">資料載入中…</div>';
+    data = await apiGet();
+    // 相容處理
+    data = data.map(x => {
+      if(x.town === "其他") x.town = "轄區外";
+      return x;
+    });
+    render();
+  }catch(err){
+    console.error(err);
+    document.getElementById("tbody").innerHTML = '<div class="empty">無法從試算表載入資料，請檢查 API 網址或網路連線</div>';
+  }
+}
+
 function writeItems(newArray){
+  // 這個函式在雲端模式下改為單一儲存
   data = newArray;
-  if(USE_CLOUD){
-    const obj={}; data.forEach(x=>obj[itemKey(x.id)]=x);
-    db.ref("items").set(obj);
-  }else{
-    localStorage.setItem("miscFeeData", JSON.stringify(data));
-    render();
-  }
+  render();
 }
-function writeAnnouncements(newArray){
-  announcements = newArray;
-  if(USE_CLOUD){
-    const obj={}; announcements.forEach(a=>obj[annKey(a.id)]=a);
-    db.ref("announcements").set(obj);
+
+async function saveItemToCloud(item){
+  const result = await apiPost({ action: "save", item });
+  if(result.success){
+    await loadData();
   }else{
-    localStorage.setItem("miscFeeAnnouncements", JSON.stringify(announcements));
-    render();
+    alert("儲存失敗：" + (result.error || ""));
   }
 }
 
-function initData(){
-  if(USE_CLOUD){
-    db.ref("items").once("value").then(snap=>{
-      if(!snap.exists()){
-        const seed={}; initialData.forEach(x=>seed[itemKey(x.id)]=x);
-        db.ref("items").set(seed);
-      }
-    });
-    db.ref("items").on("value", snap=>{
-      data = Object.values(snap.val()||{});
-      render();
-    });
-    db.ref("announcements").on("value", snap=>{
-      announcements = Object.values(snap.val()||{});
-      render();
-    });
+async function deleteItemFromCloud(id){
+  const result = await apiPost({ action: "delete", id });
+  if(result.success){
+    selectedIds.delete(id);
+    await loadData();
   }else{
-    data = JSON.parse(localStorage.getItem("miscFeeData") || "null") || initialData;
-    announcements = loadAnnouncementsLocal();
-    render();
+    alert("刪除失敗");
   }
-}
-function loadAnnouncementsLocal(){
-  const arr = JSON.parse(localStorage.getItem("miscFeeAnnouncements") || "null");
-  if(arr) return arr;
-  // 相容舊版單一公告字串，自動搬移成新格式
-  const old = localStorage.getItem("miscFeeAnnouncement");
-  if(old){
-    const migrated = [{id:Date.now(), text:old}];
-    localStorage.setItem("miscFeeAnnouncements", JSON.stringify(migrated));
-    localStorage.removeItem("miscFeeAnnouncement");
-    return migrated;
-  }
-  return [];
 }
 
+// ---------- 渲染 ----------
 function render(){
-  const isAdmin=document.body.classList.contains("admin-mode");
+  const isAdmin = document.body.classList.contains("admin-mode");
   renderAnnouncement(isAdmin);
-  const resultsSection=document.getElementById("resultsSection");
+  const resultsSection = document.getElementById("resultsSection");
   if(!interacted && !isAdmin){
     resultsSection.classList.remove("show");
     return;
   }
   resultsSection.classList.add("show");
-  const q=document.getElementById("search").value.trim().toLowerCase();
-  const list=data.filter(x=>
-    x.name.toLowerCase().includes(q) || x.town.toLowerCase().includes(q) || String(x.code||"").toLowerCase().includes(q)
+  const q = document.getElementById("search").value.trim().toLowerCase();
+  const list = data.filter(x =>
+    (x.name||"").toLowerCase().includes(q) ||
+    (x.town||"").toLowerCase().includes(q) ||
+    String(x.code||"").toLowerCase().includes(q)
   );
-  document.getElementById("count").textContent=data.length;
-  document.getElementById("shown").textContent=list.length;
-  const tbody=document.getElementById("tbody");
+  document.getElementById("count").textContent = data.length;
+  document.getElementById("shown").textContent = list.length;
+  const tbody = document.getElementById("tbody");
   updateBatchBar();
   if(!list.length){
-    tbody.innerHTML='<div class="empty">找不到符合的地段資料</div>';
+    tbody.innerHTML = '<div class="empty">找不到符合的地段資料</div>';
     return;
   }
-  tbody.innerHTML=list.map(x=>`
+  tbody.innerHTML = list.map(x => `
     <div class="ticket${selectedIds.has(x.id)?" selected":""}">
       <div class="ticket-top">
         <div class="ticket-name">
@@ -580,6 +463,20 @@ function render(){
       </div>
       <div class="ticket-perf"><svg viewBox="0 0 300 14" preserveAspectRatio="none"><path d="M0,7 C25,0 50,14 75,7 C100,0 125,14 150,7 C175,0 200,14 225,7 C250,0 275,14 300,7" fill="none" stroke="var(--line)" stroke-width="2"/></svg></div>
       <div class="ticket-bottom">
+        ${x.town === "轄區外" ? `
+        <div class="ticket-extra">
+          <span class="ticket-label">客運金額</span>
+          <span class="ticket-value">${x.bus==null?"—":"$"+Number(x.bus).toLocaleString()}</span>
+        </div>
+        <div class="ticket-extra">
+          <span class="ticket-label">火車金額</span>
+          <span class="ticket-value">${x.train==null?"—":"$"+Number(x.train).toLocaleString()}</span>
+        </div>
+        <div class="ticket-extra">
+          <span class="ticket-label">雜費</span>
+          <span class="ticket-value">${x.price==null?"—":"$"+Number(x.price).toLocaleString()}</span>
+        </div>
+        ` : `
         <div class="ticket-fee">
           <span class="ticket-label">差費金額</span>
           <span class="ticket-value">${x.price==null?"—":"$"+Number(x.price).toLocaleString()}</span>
@@ -588,167 +485,223 @@ function render(){
           <span class="ticket-label">里程</span>
           <span class="ticket-value">${x.distance==null?"—":x.distance+" km"}</span>
         </div>
+        `}
       </div>
     </div>`).join("");
 }
+
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
 
 function doSearch(){
-  interacted=true;
+  interacted = true;
   render();
 }
 
-// ---------- 後台批次選取／改差費金額 ----------
 function toggleSelect(id){
   if(selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id);
   render();
 }
 function selectAll(){
-  const q=document.getElementById("search").value.trim().toLowerCase();
-  data.filter(x=>x.name.toLowerCase().includes(q)||x.town.toLowerCase().includes(q)||String(x.code||"").toLowerCase().includes(q))
-      .forEach(x=>selectedIds.add(x.id));
-  interacted=true;
+  const q = document.getElementById("search").value.trim().toLowerCase();
+  data.filter(x =>
+    (x.name||"").toLowerCase().includes(q) ||
+    (x.town||"").toLowerCase().includes(q) ||
+    String(x.code||"").toLowerCase().includes(q)
+  ).forEach(x => selectedIds.add(x.id));
+  interacted = true;
   render();
 }
 function clearSelection(){ selectedIds.clear(); render(); }
 function updateBatchBar(){
-  const bar=document.getElementById("batchBar");
-  const n=selectedIds.size;
-  document.getElementById("selCount").textContent=n;
-  bar.classList.toggle("show", n>0 && document.body.classList.contains("admin-mode"));
+  const bar = document.getElementById("batchBar");
+  const n = selectedIds.size;
+  document.getElementById("selCount").textContent = n;
+  bar.classList.toggle("show", n > 0 && document.body.classList.contains("admin-mode"));
 }
-function applyBatchPrice(){
-  const val=document.getElementById("batchPrice").value;
-  if(val===""){alert("請輸入要套用的差費金額");return}
-  if(!selectedIds.size){alert("請先選取要修改的地段");return}
-  const price=Number(val);
-  writeItems(data.map(x=>selectedIds.has(x.id)?{...x,price}:x));
-  document.getElementById("batchPrice").value="";
+
+async function applyBatchPrice(){
+  const val = document.getElementById("batchPrice").value;
+  if(val === ""){ alert("請輸入要套用的金額"); return; }
+  if(!selectedIds.size){ alert("請先選取要修改的地段"); return; }
+  const price = Number(val);
+  const result = await apiPost({
+    action: "batchUpdatePrice",
+    ids: Array.from(selectedIds),
+    price
+  });
+  if(result.success){
+    document.getElementById("batchPrice").value = "";
+    await loadData();
+  }else{
+    alert("批次更新失敗");
+  }
 }
 
 function openModal(id=null){
-  editingId=id;
-  document.getElementById("modalTitle").textContent=id?"編輯地段":"新增地段";
-  const x=id?data.find(v=>v.id===id):null;
-  document.getElementById("town").value=x?.town||"成功鎮";
-  document.getElementById("name").value=x?.name||"";
-  document.getElementById("code").value=x?.code??"";
-  document.getElementById("price").value=x?.price??"";
-  document.getElementById("distance").value=x?.distance??"";
+  editingId = id;
+  document.getElementById("modalTitle").textContent = id ? "編輯地段" : "新增地段";
+  const x = id ? data.find(v => v.id === id) : null;
+  document.getElementById("town").value = x?.town || "成功鎮";
+  document.getElementById("name").value = x?.name || "";
+  document.getElementById("code").value = x?.code ?? "";
+  document.getElementById("price").value = x?.price ?? "";
+  document.getElementById("distance").value = x?.distance ?? "";
+  document.getElementById("bus").value = x?.bus ?? "";
+  document.getElementById("train").value = x?.train ?? "";
+  toggleFormByTown();
   document.getElementById("modal").classList.add("show");
-  setTimeout(()=>document.getElementById("name").focus(),50);
+  setTimeout(() => document.getElementById("name").focus(), 50);
 }
-function closeModal(){document.getElementById("modal").classList.remove("show");editingId=null;}
+function closeModal(){ document.getElementById("modal").classList.remove("show"); editingId = null; }
 
-// ---------- 公告（可多筆：程式碼內建 + 後台新增） ----------
+function toggleFormByTown(){
+  const isOutside = document.getElementById("town").value === "轄區外";
+  document.getElementById("groupDistance").style.display = isOutside ? "none" : "";
+  document.getElementById("groupBus").style.display = isOutside ? "" : "none";
+  document.getElementById("groupTrain").style.display = isOutside ? "" : "none";
+  document.getElementById("priceLabel").textContent = isOutside ? "雜費金額（元）*" : "差費金額（元）*";
+}
+
 function renderAnnouncement(isAdmin){
-  const wrap=document.getElementById("announceWrap");
-  const list=document.getElementById("announceList");
-  const all=getAllAnnouncements();
+  const wrap = document.getElementById("announceWrap");
+  const list = document.getElementById("announceList");
+  const all = getAllAnnouncements();
   if(!all.length && !isAdmin){
     wrap.classList.remove("show");
-    list.innerHTML="";
+    list.innerHTML = "";
     return;
   }
   wrap.classList.add("show");
   if(!all.length){
-    list.innerHTML='<div class="announce empty-hint"><span class="announce-icon">📢</span><p class="announce-text">尚未設定公告，點下方「新增公告」新增給大家看的訊息。</p></div>';
+    list.innerHTML = '<div class="announce empty-hint"><span class="announce-icon">📢</span><p class="announce-text">尚未設定公告，點下方「新增公告」新增給大家看的訊息。</p></div>';
     return;
   }
-  list.innerHTML=all.map(a=>`
+  list.innerHTML = all.map(a => `
     <div class="announce">
       <span class="announce-icon">📢</span>
       <p class="announce-text">${esc(a.text)}</p>
-      ${a.coded?'':`
+      ${a.coded ? '' : `
       <div class="announce-actions admin-only">
         <button class="btn-light" onclick="openAnnounceModal(${a.id})">✏️</button>
         <button class="btn-danger" onclick="deleteAnnounce(${a.id})">🗑️</button>
       </div>`}
     </div>`).join("");
 }
+
 function openAnnounceModal(id=null){
-  editingAnnounceId=id;
-  const a=id?announcements.find(v=>v.id===id):null;
-  document.getElementById("announceModalTitle").textContent=id?"編輯公告":"新增公告";
-  document.getElementById("announceInput").value=a?a.text:"";
+  editingAnnounceId = id;
+  const a = id ? announcements.find(v => v.id === id) : null;
+  document.getElementById("announceModalTitle").textContent = id ? "編輯公告" : "新增公告";
+  document.getElementById("announceInput").value = a ? a.text : "";
   document.getElementById("announceModal").classList.add("show");
-  setTimeout(()=>document.getElementById("announceInput").focus(),50);
+  setTimeout(() => document.getElementById("announceInput").focus(), 50);
 }
-function closeAnnounceModal(){document.getElementById("announceModal").classList.remove("show");editingAnnounceId=null;}
+function closeAnnounceModal(){ document.getElementById("announceModal").classList.remove("show"); editingAnnounceId = null; }
 function saveAnnouncement(){
-  const text=document.getElementById("announceInput").value.trim();
-  if(!text){alert("請輸入公告內容");return}
-  let next;
+  const text = document.getElementById("announceInput").value.trim();
+  if(!text){ alert("請輸入公告內容"); return; }
   if(editingAnnounceId){
-    next=announcements.map(a=>a.id===editingAnnounceId?{...a,text}:a);
+    announcements = announcements.map(a => a.id === editingAnnounceId ? {...a, text} : a);
   }else{
-    next=[...announcements,{id:Date.now(),text}];
+    announcements = [...announcements, {id: Date.now(), text}];
   }
-  writeAnnouncements(next);
+  localStorage.setItem("miscFeeAnnouncements", JSON.stringify(announcements));
   closeAnnounceModal();
+  render();
 }
 function deleteAnnounce(id){
-  const a=announcements.find(v=>v.id===id);
-  if(!a)return;
   if(confirm("確定要刪除這則公告嗎？")){
-    writeAnnouncements(announcements.filter(v=>v.id!==id));
+    announcements = announcements.filter(v => v.id !== id);
+    localStorage.setItem("miscFeeAnnouncements", JSON.stringify(announcements));
+    render();
   }
 }
 
-function saveItem(){
-  const town=document.getElementById("town").value;
-  const name=document.getElementById("name").value.trim();
-  const code=document.getElementById("code").value.trim();
-  const priceVal=document.getElementById("price").value;
-  const distVal=document.getElementById("distance").value;
-  if(!name){alert("請輸入地段名稱");return}
-  if(priceVal===""){alert("請輸入差費金額");return}
-  const item={town,name,code:code===""?null:code,price:Number(priceVal),distance:distVal===""?null:Number(distVal)};
-  let next;
-  if(editingId){
-    next=data.map(x=>x.id===editingId?{...x,...item}:x);
-  }else{
-    next=[...data,{id:Date.now(),...item}];
-  }
-  writeItems(next);
+async function saveItem(){
+  const town = document.getElementById("town").value;
+  const name = document.getElementById("name").value.trim();
+  const code = document.getElementById("code").value.trim();
+  const priceVal = document.getElementById("price").value;
+  const distVal = document.getElementById("distance").value;
+  const busVal = document.getElementById("bus").value;
+  const trainVal = document.getElementById("train").value;
+  if(!name){ alert("請輸入地段名稱"); return; }
+  if(priceVal === ""){ alert(town === "轄區外" ? "請輸入雜費金額" : "請輸入差費金額"); return; }
+
+  const item = {
+    id: editingId || Date.now(),
+    town,
+    name,
+    code: code === "" ? null : code,
+    price: Number(priceVal),
+    distance: town === "轄區外" ? null : (distVal === "" ? null : Number(distVal)),
+    bus: town === "轄區外" ? (busVal === "" ? null : Number(busVal)) : null,
+    train: town === "轄區外" ? (trainVal === "" ? null : Number(trainVal)) : null
+  };
+
   closeModal();
+  await saveItemToCloud(item);
 }
-function editItem(id){openModal(id)}
-function deleteItem(id){
-  const x=data.find(v=>v.id===id);
-  if(!x)return;
+
+function editItem(id){ openModal(id); }
+
+async function deleteItem(id){
+  const x = data.find(v => v.id === id);
+  if(!x) return;
   if(confirm(`確定要刪除「${x.name}」嗎？`)){
-    selectedIds.delete(id);
-    writeItems(data.filter(v=>v.id!==id));
+    await deleteItemFromCloud(id);
   }
 }
+
 function exportData(){
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="差費金額資料備份.json";a.click();
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "差費金額資料備份.json";
+  a.click();
   URL.revokeObjectURL(a.href);
 }
-function importData(e){
-  const file=e.target.files[0]; if(!file)return;
-  const reader=new FileReader();
-  reader.onload=()=>{
+
+async function importData(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
     try{
-      const incoming=JSON.parse(reader.result);
-      if(!Array.isArray(incoming))throw new Error();
-      const next=incoming.map((x,i)=>({
-        id:x.id||Date.now()+i,
-        town:x.town||"成功鎮",
-        name:String(x.name||"").trim(),
-        code:x.code==null||x.code===""?null:String(x.code),
-        price:x.price==null||x.price===""?null:Number(x.price),
-        distance:x.distance==null||x.distance===""?null:Number(x.distance)
-      })).filter(x=>x.name);
-      selectedIds.clear();
-      writeItems(next);
-      alert("匯入完成！共 "+next.length+" 筆資料。"+(USE_CLOUD?"已同步到雲端，所有裝置都會看到。":""));
-    }catch(err){alert("檔案格式不正確，請使用本系統匯出的 JSON 檔。")}
-    e.target.value="";
+      const incoming = JSON.parse(reader.result);
+      if(!Array.isArray(incoming)) throw new Error();
+      const items = incoming.map((x,i) => {
+        let town = x.town || "成功鎮";
+        if(town === "其他") town = "轄區外";
+        return {
+          id: x.id || Date.now() + i,
+          town,
+          name: String(x.name || "").trim(),
+          code: x.code == null || x.code === "" ? null : String(x.code),
+          price: x.price == null || x.price === "" ? null : Number(x.price),
+          bus: x.bus == null || x.bus === "" ? null : Number(x.bus),
+          train: x.train == null || x.train === "" ? null : Number(x.train),
+          distance: x.distance == null || x.distance === "" ? null : Number(x.distance)
+        };
+      }).filter(x => x.name);
+
+      const result = await apiPost({ action: "replaceAll", items });
+      if(result.success){
+        alert("匯入完成！共 " + result.count + " 筆資料已寫入試算表。");
+        await loadData();
+      }else{
+        alert("匯入失敗");
+      }
+    }catch(err){
+      alert("檔案格式不正確，請使用本系統匯出的 JSON 檔。");
+    }
+    e.target.value = "";
   };
   reader.readAsText(file);
+}
+
+function reloadFromCloud(){
+  loadData();
 }
 
 function toggleAdmin(){
@@ -759,9 +712,9 @@ function toggleAdmin(){
     render();
     return;
   }
-  const pin=prompt("請輸入後台管理密碼：");
-  if(pin===null)return;
-  if(pin===ADMIN_PIN){
+  const pin = prompt("請輸入後台管理密碼：");
+  if(pin === null) return;
+  if(pin === ADMIN_PIN){
     document.body.classList.add("admin-mode");
     document.getElementById("adminFab").classList.add("on");
     render();
@@ -770,13 +723,19 @@ function toggleAdmin(){
   }
 }
 
-document.getElementById("search").addEventListener("keydown",e=>{
-  if(e.key==="Enter") doSearch();
+// 公告本地儲存
+announcements = JSON.parse(localStorage.getItem("miscFeeAnnouncements") || "[]");
+
+document.getElementById("search").addEventListener("keydown", e => {
+  if(e.key === "Enter") doSearch();
 });
-document.getElementById("modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal();});
-document.getElementById("announceModal").addEventListener("click",e=>{if(e.target.id==="announceModal")closeAnnounceModal();});
-document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();closeAnnounceModal();}});
-initData();
+document.getElementById("town").addEventListener("change", toggleFormByTown);
+document.getElementById("modal").addEventListener("click", e => { if(e.target.id === "modal") closeModal(); });
+document.getElementById("announceModal").addEventListener("click", e => { if(e.target.id === "announceModal") closeAnnounceModal(); });
+document.addEventListener("keydown", e => { if(e.key === "Escape"){ closeModal(); closeAnnounceModal(); }});
+
+// 啟動
+loadData();
 </script>
 </body>
 </html>
