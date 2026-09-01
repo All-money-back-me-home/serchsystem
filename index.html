@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0047bb">
-<title>差費查詢系統</title>
+<title>差費金額查詢系統</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Oswald:wght@500;600&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
@@ -12,7 +12,7 @@
 :root{
   --sand:#f7fafd; --sand-deep:#eef4fb; --ink:#334155; --muted:#8291a3;
   --sea:#4075cc; --sea-deep:#0047bb; --sun:#22b573; --line:#e7eef6;
-  --card:#ffffff; --danger:#dc6a56; --danger-bg:#fdeeea;
+  --card:#ffffff;
   --shadow:0 14px 34px rgba(0,71,187,.12);
   --mono:'JetBrains Mono',ui-monospace,monospace;
   --display:'Noto Sans TC',"Microsoft JhengHei",sans-serif;
@@ -44,22 +44,18 @@ header h1{margin:0;font-size:26px;font-weight:900;letter-spacing:.02em;position:
   background:var(--card);border-radius:20px;box-shadow:var(--shadow);
   border:1px solid var(--line);padding:20px;margin-bottom:16px;
 }
-.hero{min-height:44vh;display:flex;flex-direction:column;justify-content:center}
+.hero{min-height:40vh;display:flex;flex-direction:column;justify-content:center}
 .hero .card{max-width:560px;margin:0 auto;width:100%;padding:26px 22px}
-.announce-wrap{display:none;max-width:560px;margin:34px auto 6px;flex-direction:column;gap:10px}
+.announce-wrap{
+  display:none;max-width:560px;margin:34px auto 6px;flex-direction:column;gap:10px;
+}
 .announce-wrap.show{display:flex}
 .announce{
   display:flex;background:#fff7e0;border:1px solid #f4dfa0;border-radius:14px;
   padding:12px 16px;align-items:center;gap:10px;box-shadow:var(--shadow);
 }
-.announce.empty-hint{background:var(--sand-deep);border-style:dashed;border-color:var(--line)}
 .announce-icon{font-size:18px;flex-shrink:0}
 .announce-text{flex:1;margin:0;font-size:14px;color:#7a5311;line-height:1.6;white-space:pre-wrap}
-.announce.empty-hint .announce-text{color:var(--muted)}
-.announce-actions{display:none;flex-shrink:0;gap:6px}
-body.admin-mode .announce-actions{display:flex}
-.announce-actions button{padding:7px 9px;font-size:12px;border-radius:8px}
-.announce-add-btn{align-self:center;padding:9px 16px;font-size:13px}
 .badge-row{display:flex;align-items:center;gap:10px;margin-bottom:16px}
 .badge-plate{
   font-family:var(--label);font-weight:600;font-size:13px;letter-spacing:.08em;
@@ -78,18 +74,10 @@ body.admin-mode .announce-actions{display:flex}
 .search-box input:focus{border-color:var(--sea);box-shadow:0 0 0 4px rgba(0,71,187,.15)}
 .search-icon{position:absolute;left:19px;top:16px;font-size:19px;color:var(--muted)}
 button{border:0;border-radius:12px;padding:12px 18px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--display)}
-button:focus-visible, input:focus-visible, select:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
-.btn-primary{background:var(--sea-deep);color:#fff;transition:background .15s ease, transform .1s ease}
+.btn-primary{background:var(--sea-deep);color:#fff}
 .btn-primary:hover{background:#003a99}
-.btn-primary:active{transform:translateY(1px)}
 .btn-pill{border-radius:999px;height:54px;padding:0 30px}
-.btn-light{background:#dbeafe;color:var(--sea-deep)}
-.btn-light:hover{background:#dbe8fb}
-.btn-danger{background:var(--danger-bg);color:var(--danger)}
 .hint{margin:12px 2px 0;font-size:12.5px;color:var(--muted)}
-.stats{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
-.stat{background:var(--sand-deep);border-radius:12px;padding:9px 13px;font-size:13px;color:var(--muted)}
-.stat b{color:var(--ink);font-size:16px;margin-right:3px;font-family:var(--mono)}
 #resultsSection{display:none}
 #resultsSection.show{display:block}
 .section-label{
@@ -103,12 +91,8 @@ button:focus-visible, input:focus-visible, select:focus-visible{outline:3px soli
   animation:rise .32s ease both;
 }
 @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.ticket-top{
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
-  padding:15px 20px;
-}
+.ticket-top{padding:15px 20px}
 .ticket-name{font-size:19px;font-weight:900;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.ticket-check{width:20px;height:20px;accent-color:var(--sea-deep);cursor:pointer;flex-shrink:0}
 .town-tag{
   font-family:var(--label);font-weight:600;font-size:10.5px;letter-spacing:.05em;
   color:var(--sea-deep);background:#dbeafe;border-radius:7px;padding:3px 8px;
@@ -130,66 +114,8 @@ button:focus-visible, input:focus-visible, select:focus-visible{outline:3px soli
 .ticket-fee{border-right:1px solid var(--line)}
 .ticket-extra{border-right:1px solid var(--line)}
 .ticket-extra:last-child{border-right:0}
-.ticket-actions{display:flex;gap:7px}
-.action-btn{padding:8px 11px;font-size:13px;border-radius:9px}
 .empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:15px}
-.ticket.selected{border-color:var(--sea-deep);box-shadow:0 0 0 3px rgba(0,71,187,.14)}
-.batch-bar{
-  display:none;position:sticky;top:10px;z-index:12;background:var(--sea-deep);color:#fff;
-  border-radius:16px;padding:12px 16px;margin-bottom:14px;align-items:center;gap:10px;
-  flex-wrap:wrap;box-shadow:0 10px 28px rgba(0,71,187,.28);
-}
-.batch-bar.show{display:flex}
-.batch-bar .batch-count{font-weight:700;font-size:14px;white-space:nowrap}
-.batch-bar input{
-  height:40px;border-radius:10px;border:0;padding:0 12px;font-size:15px;width:140px;
-  font-family:var(--display);
-}
-.batch-bar button{padding:9px 14px;font-size:14px;border-radius:10px}
-.batch-bar .btn-apply{background:var(--sun);color:#0d3b23}
-.batch-bar .btn-clear{background:rgba(255,255,255,.18);color:#fff}
-.admin-only{display:none}
-body.admin-mode .admin-only{display:revert}
-body.admin-mode .ticket-actions{display:flex}
-.toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
-.toolbar h2{font-size:16px;margin:0;font-family:var(--label);font-weight:600;letter-spacing:.04em;color:var(--sea-deep)}
-.note{font-size:12.5px;color:var(--muted);line-height:1.6}
-.file-input{display:none}
-.admin-badge{
-  display:none;background:#fbeecf;color:#7a5311;border-radius:20px;padding:7px 13px;
-  font-size:12.5px;font-weight:700;align-items:center;gap:6px;
-}
-body.admin-mode .admin-badge{display:inline-flex}
-.admin-fab{
-  position:fixed;right:18px;bottom:18px;width:46px;height:46px;border-radius:50%;
-  background:var(--sea-deep);color:#fff;font-size:19px;display:flex;align-items:center;
-  justify-content:center;box-shadow:0 8px 20px rgba(0,71,187,.30);opacity:.5;z-index:15;
-  border:none;cursor:pointer;transition:opacity .15s ease, background .15s ease;
-}
-.admin-fab.on{background:var(--sun);opacity:1}
-.modal{position:fixed;inset:0;background:rgba(8,26,30,.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:20}
-.modal.show{display:flex}
-.modal-box{width:min(500px,100%);background:#fff;border-radius:20px;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.28)}
-.modal h2{margin:0 0 18px;font-size:19px;font-weight:900}
-.form-group{margin-bottom:14px}
-.form-group label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;color:var(--sea-deep)}
-.form-group input,.form-group select{
-  width:100%;height:46px;border:1.5px solid var(--line);border-radius:10px;padding:0 12px;
-  font-size:16px;font-family:var(--display);color:var(--ink);background:#fff;
-}
-.form-group textarea{
-  width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;
-  font-size:15px;font-family:var(--display);color:var(--ink);background:#fff;
-  resize:vertical;line-height:1.6;
-}
-.form-group textarea:focus{outline:none;border-color:var(--sea)}
-.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--sea)}
-.modal-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:20px}
 .loading{text-align:center;padding:40px;color:var(--muted)}
-@media(prefers-reduced-motion:reduce){
-  .ticket{animation:none}
-  *{transition:none!important}
-}
 @media(max-width:600px){
   header{padding:26px 16px 40px}
   header h1{font-size:22px}
@@ -200,15 +126,13 @@ body.admin-mode .admin-badge{display:inline-flex}
   .ticket-bottom{flex-direction:column;gap:12px}
   .ticket-fee,.ticket-extra{border-right:0;border-bottom:1px solid var(--line);padding-bottom:10px}
   .ticket-extra:last-child{border-bottom:0;padding-bottom:0}
-  .batch-bar{flex-direction:column;align-items:stretch}
-  .batch-bar input,.batch-bar button{width:100%}
 }
 </style>
 </head>
 <body>
 <header>
   <p class="eyebrow">台11線・東海岸・差費速算</p>
-  <h1>📋 差費查詢系統</h1>
+  <h1>📋 差費金額查詢系統</h1>
   <div class="header-wave" aria-hidden="true">
     <svg viewBox="0 0 1440 60" preserveAspectRatio="none">
       <path d="M0,30 C240,60 480,0 720,26 C960,52 1200,6 1440,30 L1440,60 L0,60 Z" fill="#ffffff" opacity=".18"/>
@@ -220,7 +144,6 @@ body.admin-mode .admin-badge{display:inline-flex}
 <main class="container">
   <section class="announce-wrap" id="announceWrap">
     <div class="announce-list" id="announceList"></div>
-    <button class="btn-light admin-only announce-add-btn" onclick="openAnnounceModal()">➕ 新增公告</button>
   </section>
 
   <section class="hero">
@@ -235,144 +158,34 @@ body.admin-mode .admin-badge{display:inline-flex}
           <input id="search" type="search" placeholder="輸入地區、地段或段碼，例如：台東市、福亨段、1047">
         </div>
         <button class="btn-primary btn-pill" onclick="doSearch()">搜尋</button>
-        <button class="btn-primary admin-only" onclick="openModal()">＋ 新增地段</button>
       </div>
       <p class="hint">輸入後按「搜尋」或 Enter 鍵即可查詢</p>
-      <div class="stats admin-only">
-        <div class="stat"><b id="count">0</b>筆資料</div>
-        <div class="stat">目前顯示 <b id="shown">0</b>筆</div>
-        <div class="admin-badge">🔓 後台編輯模式已開啟</div>
-      </div>
     </div>
-  </section>
-
-  <section class="card admin-only">
-    <div class="toolbar">
-      <h2>地段差費資料（後台管理）</h2>
-      <div>
-        <button class="btn-light" onclick="selectAll()">☑ 全選目前顯示</button>
-        <button class="btn-light" onclick="clearSelection()">取消選取</button>
-        <button class="btn-light" onclick="exportData()">⬇ 匯出資料</button>
-        <button class="btn-light" onclick="document.getElementById('importFile').click()">⬆ 匯入資料</button>
-        <input id="importFile" class="file-input" type="file" accept=".json" onchange="importData(event)">
-        <button class="btn-light" onclick="reloadFromCloud()">↻ 重新從試算表載入</button>
-      </div>
-    </div>
-    <p class="note">資料來源：Google 試算表。可直接在試算表新增／修改／刪除，然後按「重新從試算表載入」即可同步。</p>
   </section>
 
   <section id="resultsSection">
-    <div class="batch-bar admin-only" id="batchBar">
-      <span class="batch-count"><b id="selCount">0</b> 筆已選取</span>
-      <input id="batchPrice" type="number" min="0" step="1" placeholder="輸入差費／雜費金額">
-      <button class="btn-apply" onclick="applyBatchPrice()">套用到已選地段</button>
-      <button class="btn-clear" onclick="clearSelection()">取消選取</button>
-    </div>
     <p class="section-label">查詢結果</p>
     <div class="ticket-list" id="tbody"></div>
   </section>
 </main>
-
-<button class="admin-fab" id="adminFab" onclick="toggleAdmin()" title="後台管理" aria-label="後台管理">⚙</button>
-
-<div class="modal" id="modal">
-  <div class="modal-box">
-    <h2 id="modalTitle">新增地段</h2>
-    <div class="form-group">
-      <label>所屬鄉鎮 *</label>
-      <select id="town">
-        <option value="成功鎮">成功鎮</option>
-        <option value="長濱鄉">長濱鄉</option>
-        <option value="東河鄉">東河鄉</option>
-        <option value="轄區外">轄區外</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>地段名稱 *</label>
-      <input id="name" placeholder="例如：成功、長濱、都蘭">
-    </div>
-    <div class="form-group">
-      <label>段碼</label>
-      <input id="code" placeholder="例如：100（地政段代碼，非必填）">
-    </div>
-    <div class="form-group" id="groupPrice">
-      <label id="priceLabel">雜費（元）*</label>
-      <input id="price" type="number" min="0" step="1" placeholder="例如：130">
-    </div>
-    <div class="form-group" id="groupDistance">
-      <label>里程</label>
-      <input id="distance" type="number" min="0" step="1" placeholder="例如：58">
-    </div>
-    <div class="form-group" id="groupBus" style="display:none">
-      <label>客運金額（元）</label>
-      <input id="bus" type="number" min="0" step="1" placeholder="例如：220">
-    </div>
-    <div class="form-group" id="groupTrain" style="display:none">
-      <label>火車金額（元）</label>
-      <input id="train" type="number" min="0" step="1" placeholder="例如：180">
-    </div>
-    <div class="modal-actions">
-      <button class="btn-light" onclick="closeModal()">取消</button>
-      <button class="btn-primary" onclick="saveItem()">儲存</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal" id="announceModal">
-  <div class="modal-box">
-    <h2 id="announceModalTitle">新增公告</h2>
-    <div class="form-group">
-      <label>公告內容</label>
-      <textarea id="announceInput" rows="5" placeholder="輸入要顯示給大家看的公告內容"></textarea>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-light" onclick="closeAnnounceModal()">取消</button>
-      <button class="btn-primary" onclick="saveAnnouncement()">儲存</button>
-    </div>
-  </div>
-</div>
 
 <script>
 // ========== 請把下面網址換成你部署後的 Apps Script 網址 ==========
 const API_URL = "https://script.google.com/macros/s/AKfycbzKzIiXl7bNtTzHUWdDIkE8OsTAIXXJqwBDwvBt77PJpVKm_dJ6z0RTjMemYEZWBvwe/exec";
 // =================================================================
 
-const CODED_ANNOUNCEMENTS = [
-  "台東市、關山鎮(汽車及捷運)代碼089"
-];
-
 let data = [];
 let announcements = [];
-let editingAnnounceId = null;
-let editingId = null;
 let interacted = false;
-let selectedIds = new Set();
-const ADMIN_PIN = "0423";
-
-function getAllAnnouncements(){
-  const coded = CODED_ANNOUNCEMENTS.map((text,i)=>({id:"coded-"+i, text, coded:true}));
-  return [...coded, ...announcements];
-}
-
-async function apiGet(){
-  const res = await fetch(API_URL + "?action=list");
-  if(!res.ok) throw new Error("讀取失敗");
-  return await res.json();
-}
-
-async function apiPost(payload){
-  const res = await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify(payload)
-  });
-  if(!res.ok) throw new Error("寫入失敗");
-  return await res.json();
-}
 
 async function loadData(){
   try{
     document.getElementById("tbody").innerHTML = '<div class="loading">資料載入中…</div>';
-    data = await apiGet();
+    const res = await fetch(API_URL + "?action=list");
+    if(!res.ok) throw new Error("讀取失敗");
+    const json = await res.json();
+    data = json.items || [];
+    announcements = json.announcements || [];
     data = data.map(x => {
       if(x.town === "其他") x.town = "轄區外";
       return x;
@@ -385,49 +198,51 @@ async function loadData(){
 }
 
 function render(){
-  const isAdmin = document.body.classList.contains("admin-mode");
-  renderAnnouncement(isAdmin);
+  // 公告
+  const wrap = document.getElementById("announceWrap");
+  const list = document.getElementById("announceList");
+  if(announcements.length){
+    wrap.classList.add("show");
+    list.innerHTML = announcements.map(a => `
+      <div class="announce">
+        <span class="announce-icon">📢</span>
+        <p class="announce-text">${esc(a.text)}</p>
+      </div>`).join("");
+  }else{
+    wrap.classList.remove("show");
+    list.innerHTML = "";
+  }
+
   const resultsSection = document.getElementById("resultsSection");
-  if(!interacted && !isAdmin){
+  if(!interacted){
     resultsSection.classList.remove("show");
     return;
   }
   resultsSection.classList.add("show");
+
   const q = document.getElementById("search").value.trim().toLowerCase();
-  const list = data.filter(x =>
+  const filtered = data.filter(x =>
     (x.name||"").toLowerCase().includes(q) ||
     (x.town||"").toLowerCase().includes(q) ||
     String(x.code||"").toLowerCase().includes(q)
   );
-  document.getElementById("count").textContent = data.length;
-  document.getElementById("shown").textContent = list.length;
+
   const tbody = document.getElementById("tbody");
-  updateBatchBar();
-  if(!list.length){
+  if(!filtered.length){
     tbody.innerHTML = '<div class="empty">找不到符合的地段資料</div>';
     return;
   }
-  tbody.innerHTML = list.map(x => {
+
+  tbody.innerHTML = filtered.map(x => {
     const bus = x.bus == null ? null : Number(x.bus);
     const train = x.train == null ? null : Number(x.train);
     const oneWayTotal = (bus || 0) + (train || 0);
     const hasTransport = bus != null || train != null;
 
-    return `
-    <div class="ticket${selectedIds.has(x.id)?" selected":""}">
-      <div class="ticket-top">
-        <div class="ticket-name">
-          <input type="checkbox" class="ticket-check admin-only" ${selectedIds.has(x.id)?"checked":""} onchange="toggleSelect(${x.id})" aria-label="選取 ${esc(x.name)}">
-          ${esc(x.name)}<span class="town-tag">${esc(x.town)}</span>${x.code?`<span class="code-tag">段碼 ${esc(x.code)}</span>`:""}
-        </div>
-        <div class="ticket-actions admin-only">
-          <button class="btn-light action-btn" onclick="editItem(${x.id})">✏️ 編輯</button>
-          <button class="btn-danger action-btn" onclick="deleteItem(${x.id})">🗑️ 刪除</button>
-        </div>
-      </div>
-      <div class="ticket-perf"><svg viewBox="0 0 300 14" preserveAspectRatio="none"><path d="M0,7 C25,0 50,14 75,7 C100,0 125,14 150,7 C175,0 200,14 225,7 C250,0 275,14 300,7" fill="none" stroke="var(--line)" stroke-width="2"/></svg></div>
-      <div class="ticket-bottom">
-        ${x.town === "轄區外" ? `
+    let bottomHtml = "";
+
+    if (x.town === "轄區外") {
+      bottomHtml = `
         <div class="ticket-extra">
           <span class="ticket-label">客運金額（單趟）</span>
           <span class="ticket-value">${bus==null?"—":"$"+bus.toLocaleString()}</span>
@@ -448,7 +263,9 @@ function render(){
           <span class="ticket-label">雜費</span>
           <span class="ticket-value">${x.price==null?"—":"$"+Number(x.price).toLocaleString()}</span>
         </div>
-        ` : `
+      `;
+    } else {
+      bottomHtml = `
         <div class="ticket-fee">
           <span class="ticket-label">雜費</span>
           <span class="ticket-value">${x.price==null?"—":"$"+Number(x.price).toLocaleString()}</span>
@@ -457,7 +274,21 @@ function render(){
           <span class="ticket-label">里程</span>
           <span class="ticket-value">${x.distance==null?"—":x.distance+" km"}</span>
         </div>
-        `}
+      `;
+    }
+
+    return `
+    <div class="ticket">
+      <div class="ticket-top">
+        <div class="ticket-name">
+          ${esc(x.name)}
+          <span class="town-tag">${esc(x.town)}</span>
+          ${x.code ? `<span class="code-tag">段碼 ${esc(x.code)}</span>` : ""}
+        </div>
+      </div>
+      <div class="ticket-perf"><svg viewBox="0 0 300 14" preserveAspectRatio="none"><path d="M0,7 C25,0 50,14 75,7 C100,0 125,14 150,7 C175,0 200,14 225,7 C250,0 275,14 300,7" fill="none" stroke="var(--line)" stroke-width="2"/></svg></div>
+      <div class="ticket-bottom">
+        ${bottomHtml}
       </div>
     </div>`;
   }).join("");
@@ -470,252 +301,9 @@ function doSearch(){
   render();
 }
 
-function toggleSelect(id){
-  if(selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id);
-  render();
-}
-function selectAll(){
-  const q = document.getElementById("search").value.trim().toLowerCase();
-  data.filter(x =>
-    (x.name||"").toLowerCase().includes(q) ||
-    (x.town||"").toLowerCase().includes(q) ||
-    String(x.code||"").toLowerCase().includes(q)
-  ).forEach(x => selectedIds.add(x.id));
-  interacted = true;
-  render();
-}
-function clearSelection(){ selectedIds.clear(); render(); }
-function updateBatchBar(){
-  const bar = document.getElementById("batchBar");
-  const n = selectedIds.size;
-  document.getElementById("selCount").textContent = n;
-  bar.classList.toggle("show", n > 0 && document.body.classList.contains("admin-mode"));
-}
-
-async function applyBatchPrice(){
-  const val = document.getElementById("batchPrice").value;
-  if(val === ""){ alert("請輸入要套用的金額"); return; }
-  if(!selectedIds.size){ alert("請先選取要修改的地段"); return; }
-  const price = Number(val);
-  const result = await apiPost({
-    action: "batchUpdatePrice",
-    ids: Array.from(selectedIds),
-    price
-  });
-  if(result.success){
-    document.getElementById("batchPrice").value = "";
-    await loadData();
-  }else{
-    alert("批次更新失敗");
-  }
-}
-
-function openModal(id=null){
-  editingId = id;
-  document.getElementById("modalTitle").textContent = id ? "編輯地段" : "新增地段";
-  const x = id ? data.find(v => v.id === id) : null;
-  document.getElementById("town").value = x?.town || "成功鎮";
-  document.getElementById("name").value = x?.name || "";
-  document.getElementById("code").value = x?.code ?? "";
-  document.getElementById("price").value = x?.price ?? "";
-  document.getElementById("distance").value = x?.distance ?? "";
-  document.getElementById("bus").value = x?.bus ?? "";
-  document.getElementById("train").value = x?.train ?? "";
-  toggleFormByTown();
-  document.getElementById("modal").classList.add("show");
-  setTimeout(() => document.getElementById("name").focus(), 50);
-}
-function closeModal(){ document.getElementById("modal").classList.remove("show"); editingId = null; }
-
-function toggleFormByTown(){
-  const isOutside = document.getElementById("town").value === "轄區外";
-  document.getElementById("groupDistance").style.display = isOutside ? "none" : "";
-  document.getElementById("groupBus").style.display = isOutside ? "" : "none";
-  document.getElementById("groupTrain").style.display = isOutside ? "" : "none";
-  document.getElementById("priceLabel").textContent = isOutside ? "雜費金額（元）*" : "雜費（元）*";
-}
-
-function renderAnnouncement(isAdmin){
-  const wrap = document.getElementById("announceWrap");
-  const list = document.getElementById("announceList");
-  const all = getAllAnnouncements();
-  if(!all.length && !isAdmin){
-    wrap.classList.remove("show");
-    list.innerHTML = "";
-    return;
-  }
-  wrap.classList.add("show");
-  if(!all.length){
-    list.innerHTML = '<div class="announce empty-hint"><span class="announce-icon">📢</span><p class="announce-text">尚未設定公告，點下方「新增公告」新增給大家看的訊息。</p></div>';
-    return;
-  }
-  list.innerHTML = all.map(a => `
-    <div class="announce">
-      <span class="announce-icon">📢</span>
-      <p class="announce-text">${esc(a.text)}</p>
-      ${a.coded ? '' : `
-      <div class="announce-actions admin-only">
-        <button class="btn-light" onclick="openAnnounceModal(${a.id})">✏️</button>
-        <button class="btn-danger" onclick="deleteAnnounce(${a.id})">🗑️</button>
-      </div>`}
-    </div>`).join("");
-}
-
-function openAnnounceModal(id=null){
-  editingAnnounceId = id;
-  const a = id ? announcements.find(v => v.id === id) : null;
-  document.getElementById("announceModalTitle").textContent = id ? "編輯公告" : "新增公告";
-  document.getElementById("announceInput").value = a ? a.text : "";
-  document.getElementById("announceModal").classList.add("show");
-  setTimeout(() => document.getElementById("announceInput").focus(), 50);
-}
-function closeAnnounceModal(){ document.getElementById("announceModal").classList.remove("show"); editingAnnounceId = null; }
-function saveAnnouncement(){
-  const text = document.getElementById("announceInput").value.trim();
-  if(!text){ alert("請輸入公告內容"); return; }
-  if(editingAnnounceId){
-    announcements = announcements.map(a => a.id === editingAnnounceId ? {...a, text} : a);
-  }else{
-    announcements = [...announcements, {id: Date.now(), text}];
-  }
-  localStorage.setItem("miscFeeAnnouncements", JSON.stringify(announcements));
-  closeAnnounceModal();
-  render();
-}
-function deleteAnnounce(id){
-  if(confirm("確定要刪除這則公告嗎？")){
-    announcements = announcements.filter(v => v.id !== id);
-    localStorage.setItem("miscFeeAnnouncements", JSON.stringify(announcements));
-    render();
-  }
-}
-
-async function saveItem(){
-  const town = document.getElementById("town").value;
-  const name = document.getElementById("name").value.trim();
-  const code = document.getElementById("code").value.trim();
-  const priceVal = document.getElementById("price").value;
-  const distVal = document.getElementById("distance").value;
-  const busVal = document.getElementById("bus").value;
-  const trainVal = document.getElementById("train").value;
-  if(!name){ alert("請輸入地段名稱"); return; }
-  if(priceVal === ""){ alert(town === "轄區外" ? "請輸入雜費金額" : "請輸入雜費"); return; }
-
-  const item = {
-    id: editingId || Date.now(),
-    town,
-    name,
-    code: code === "" ? null : code,
-    price: Number(priceVal),
-    distance: town === "轄區外" ? null : (distVal === "" ? null : Number(distVal)),
-    bus: town === "轄區外" ? (busVal === "" ? null : Number(busVal)) : null,
-    train: town === "轄區外" ? (trainVal === "" ? null : Number(trainVal)) : null
-  };
-
-  closeModal();
-  const result = await apiPost({ action: "save", item });
-  if(result.success){
-    await loadData();
-  }else{
-    alert("儲存失敗");
-  }
-}
-
-function editItem(id){ openModal(id); }
-
-async function deleteItem(id){
-  const x = data.find(v => v.id === id);
-  if(!x) return;
-  if(confirm(`確定要刪除「${x.name}」嗎？`)){
-    const result = await apiPost({ action: "delete", id });
-    if(result.success){
-      selectedIds.delete(id);
-      await loadData();
-    }else{
-      alert("刪除失敗");
-    }
-  }
-}
-
-function exportData(){
-  const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "雜費資料備份.json";
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-async function importData(e){
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = async () => {
-    try{
-      const incoming = JSON.parse(reader.result);
-      if(!Array.isArray(incoming)) throw new Error();
-      const items = incoming.map((x,i) => {
-        let town = x.town || "成功鎮";
-        if(town === "其他") town = "轄區外";
-        return {
-          id: x.id || Date.now() + i,
-          town,
-          name: String(x.name || "").trim(),
-          code: x.code == null || x.code === "" ? null : String(x.code),
-          price: x.price == null || x.price === "" ? null : Number(x.price),
-          bus: x.bus == null || x.bus === "" ? null : Number(x.bus),
-          train: x.train == null || x.train === "" ? null : Number(x.train),
-          distance: x.distance == null || x.distance === "" ? null : Number(x.distance)
-        };
-      }).filter(x => x.name);
-
-      const result = await apiPost({ action: "replaceAll", items });
-      if(result.success){
-        alert("匯入完成！共 " + result.count + " 筆資料已寫入試算表。");
-        await loadData();
-      }else{
-        alert("匯入失敗");
-      }
-    }catch(err){
-      alert("檔案格式不正確，請使用本系統匯出的 JSON 檔。");
-    }
-    e.target.value = "";
-  };
-  reader.readAsText(file);
-}
-
-function reloadFromCloud(){
-  loadData();
-}
-
-function toggleAdmin(){
-  if(document.body.classList.contains("admin-mode")){
-    document.body.classList.remove("admin-mode");
-    document.getElementById("adminFab").classList.remove("on");
-    selectedIds.clear();
-    render();
-    return;
-  }
-  const pin = prompt("請輸入後台管理密碼：");
-  if(pin === null) return;
-  if(pin === ADMIN_PIN){
-    document.body.classList.add("admin-mode");
-    document.getElementById("adminFab").classList.add("on");
-    render();
-  }else{
-    alert("密碼錯誤");
-  }
-}
-
-announcements = JSON.parse(localStorage.getItem("miscFeeAnnouncements") || "[]");
-
 document.getElementById("search").addEventListener("keydown", e => {
   if(e.key === "Enter") doSearch();
 });
-document.getElementById("town").addEventListener("change", toggleFormByTown);
-document.getElementById("modal").addEventListener("click", e => { if(e.target.id === "modal") closeModal(); });
-document.getElementById("announceModal").addEventListener("click", e => { if(e.target.id === "announceModal") closeAnnounceModal(); });
-document.addEventListener("keydown", e => { if(e.key === "Escape"){ closeModal(); closeAnnounceModal(); }});
 
 loadData();
 </script>
