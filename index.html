@@ -27,7 +27,6 @@ body{
   min-height:100vh;
 }
 ::selection{background:var(--sun);color:#231a08}
-
 header{
   position:relative;overflow:hidden;
   background:linear-gradient(160deg,var(--sea-deep) 0%,var(--sea) 62%,#bcdcfb 100%);
@@ -40,20 +39,14 @@ header .eyebrow{
 header h1{margin:0;font-size:26px;font-weight:900;letter-spacing:.02em;position:relative;z-index:1}
 .header-wave{position:absolute;left:0;right:0;bottom:-1px;line-height:0}
 .header-wave svg{width:100%;height:56px;display:block}
-
 .container{max-width:960px;margin:-28px auto 44px;padding:0 16px;position:relative}
-
 .card{
   background:var(--card);border-radius:20px;box-shadow:var(--shadow);
   border:1px solid var(--line);padding:20px;margin-bottom:16px;
 }
-
 .hero{min-height:44vh;display:flex;flex-direction:column;justify-content:center}
 .hero .card{max-width:560px;margin:0 auto;width:100%;padding:26px 22px}
-
-.announce-wrap{
-  display:none;max-width:560px;margin:34px auto 6px;flex-direction:column;gap:10px;
-}
+.announce-wrap{display:none;max-width:560px;margin:34px auto 6px;flex-direction:column;gap:10px}
 .announce-wrap.show{display:flex}
 .announce{
   display:flex;background:#fff7e0;border:1px solid #f4dfa0;border-radius:14px;
@@ -94,11 +87,9 @@ button:focus-visible, input:focus-visible, select:focus-visible{outline:3px soli
 .btn-light:hover{background:#dbe8fb}
 .btn-danger{background:var(--danger-bg);color:var(--danger)}
 .hint{margin:12px 2px 0;font-size:12.5px;color:var(--muted)}
-
 .stats{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
 .stat{background:var(--sand-deep);border-radius:12px;padding:9px 13px;font-size:13px;color:var(--muted)}
 .stat b{color:var(--ink);font-size:16px;margin-right:3px;font-family:var(--mono)}
-
 #resultsSection{display:none}
 #resultsSection.show{display:block}
 .section-label{
@@ -128,13 +119,13 @@ button:focus-visible, input:focus-visible, select:focus-visible{outline:3px soli
 }
 .ticket-perf{height:14px;margin:0;overflow:hidden;line-height:0}
 .ticket-perf svg{width:100%;height:14px;display:block}
-.ticket-bottom{display:flex;padding:14px 20px 17px;gap:10px}
-.ticket-fee,.ticket-dist,.ticket-extra{flex:1}
+.ticket-bottom{display:flex;flex-wrap:wrap;padding:14px 20px 17px;gap:10px}
+.ticket-fee,.ticket-dist,.ticket-extra{flex:1;min-width:120px}
 .ticket-label{
   display:block;font-family:var(--label);font-weight:500;font-size:10.5px;
   letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;
 }
-.ticket-value{font-family:var(--mono);font-weight:700;font-size:21px;color:var(--sea-deep)}
+.ticket-value{font-family:var(--mono);font-weight:700;font-size:20px;color:var(--sea-deep)}
 .ticket-dist .ticket-value{color:var(--ink);font-size:18px}
 .ticket-fee{border-right:1px solid var(--line)}
 .ticket-extra{border-right:1px solid var(--line)}
@@ -143,7 +134,6 @@ button:focus-visible, input:focus-visible, select:focus-visible{outline:3px soli
 .action-btn{padding:8px 11px;font-size:13px;border-radius:9px}
 .empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:15px}
 .ticket.selected{border-color:var(--sea-deep);box-shadow:0 0 0 3px rgba(0,71,187,.14)}
-
 .batch-bar{
   display:none;position:sticky;top:10px;z-index:12;background:var(--sea-deep);color:#fff;
   border-radius:16px;padding:12px 16px;margin-bottom:14px;align-items:center;gap:10px;
@@ -158,7 +148,6 @@ button:focus-visible, input:focus-visible, select:focus-visible{outline:3px soli
 .batch-bar button{padding:9px 14px;font-size:14px;border-radius:10px}
 .batch-bar .btn-apply{background:var(--sun);color:#0d3b23}
 .batch-bar .btn-clear{background:rgba(255,255,255,.18);color:#fff}
-
 .admin-only{display:none}
 body.admin-mode .admin-only{display:revert}
 body.admin-mode .ticket-actions{display:flex}
@@ -178,7 +167,6 @@ body.admin-mode .admin-badge{display:inline-flex}
   border:none;cursor:pointer;transition:opacity .15s ease, background .15s ease;
 }
 .admin-fab.on{background:var(--sun);opacity:1}
-
 .modal{position:fixed;inset:0;background:rgba(8,26,30,.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:20}
 .modal.show{display:flex}
 .modal-box{width:min(500px,100%);background:#fff;border-radius:20px;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.28)}
@@ -197,9 +185,7 @@ body.admin-mode .admin-badge{display:inline-flex}
 .form-group textarea:focus{outline:none;border-color:var(--sea)}
 .form-group input:focus,.form-group select:focus{outline:none;border-color:var(--sea)}
 .modal-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:20px}
-
 .loading{text-align:center;padding:40px;color:var(--muted)}
-
 @media(prefers-reduced-motion:reduce){
   .ticket{animation:none}
   *{transition:none!important}
@@ -361,14 +347,13 @@ let editingAnnounceId = null;
 let editingId = null;
 let interacted = false;
 let selectedIds = new Set();
-const ADMIN_PIN = "0000";
+const ADMIN_PIN = "0423";
 
 function getAllAnnouncements(){
   const coded = CODED_ANNOUNCEMENTS.map((text,i)=>({id:"coded-"+i, text, coded:true}));
   return [...coded, ...announcements];
 }
 
-// ---------- API 呼叫 ----------
 async function apiGet(){
   const res = await fetch(API_URL + "?action=list");
   if(!res.ok) throw new Error("讀取失敗");
@@ -388,7 +373,6 @@ async function loadData(){
   try{
     document.getElementById("tbody").innerHTML = '<div class="loading">資料載入中…</div>';
     data = await apiGet();
-    // 相容處理
     data = data.map(x => {
       if(x.town === "其他") x.town = "轄區外";
       return x;
@@ -400,32 +384,6 @@ async function loadData(){
   }
 }
 
-function writeItems(newArray){
-  // 這個函式在雲端模式下改為單一儲存
-  data = newArray;
-  render();
-}
-
-async function saveItemToCloud(item){
-  const result = await apiPost({ action: "save", item });
-  if(result.success){
-    await loadData();
-  }else{
-    alert("儲存失敗：" + (result.error || ""));
-  }
-}
-
-async function deleteItemFromCloud(id){
-  const result = await apiPost({ action: "delete", id });
-  if(result.success){
-    selectedIds.delete(id);
-    await loadData();
-  }else{
-    alert("刪除失敗");
-  }
-}
-
-// ---------- 渲染 ----------
 function render(){
   const isAdmin = document.body.classList.contains("admin-mode");
   renderAnnouncement(isAdmin);
@@ -449,7 +407,13 @@ function render(){
     tbody.innerHTML = '<div class="empty">找不到符合的地段資料</div>';
     return;
   }
-  tbody.innerHTML = list.map(x => `
+  tbody.innerHTML = list.map(x => {
+    const bus = x.bus == null ? null : Number(x.bus);
+    const train = x.train == null ? null : Number(x.train);
+    const oneWayTotal = (bus || 0) + (train || 0);
+    const hasTransport = bus != null || train != null;
+
+    return `
     <div class="ticket${selectedIds.has(x.id)?" selected":""}">
       <div class="ticket-top">
         <div class="ticket-name">
@@ -465,12 +429,20 @@ function render(){
       <div class="ticket-bottom">
         ${x.town === "轄區外" ? `
         <div class="ticket-extra">
-          <span class="ticket-label">客運金額</span>
-          <span class="ticket-value">${x.bus==null?"—":"$"+Number(x.bus).toLocaleString()}</span>
+          <span class="ticket-label">客運金額（單趟）</span>
+          <span class="ticket-value">${bus==null?"—":"$"+bus.toLocaleString()}</span>
         </div>
         <div class="ticket-extra">
-          <span class="ticket-label">火車金額</span>
-          <span class="ticket-value">${x.train==null?"—":"$"+Number(x.train).toLocaleString()}</span>
+          <span class="ticket-label">火車金額（單趟）</span>
+          <span class="ticket-value">${train==null?"—":"$"+train.toLocaleString()}</span>
+        </div>
+        <div class="ticket-extra">
+          <span class="ticket-label">單趟總額</span>
+          <span class="ticket-value">${hasTransport?"$"+oneWayTotal.toLocaleString():"—"}</span>
+        </div>
+        <div class="ticket-extra">
+          <span class="ticket-label">來回總額</span>
+          <span class="ticket-value">${hasTransport?"$"+(oneWayTotal*2).toLocaleString():"—"}</span>
         </div>
         <div class="ticket-extra">
           <span class="ticket-label">雜費</span>
@@ -487,7 +459,8 @@ function render(){
         </div>
         `}
       </div>
-    </div>`).join("");
+    </div>`;
+  }).join("");
 }
 
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
@@ -640,7 +613,12 @@ async function saveItem(){
   };
 
   closeModal();
-  await saveItemToCloud(item);
+  const result = await apiPost({ action: "save", item });
+  if(result.success){
+    await loadData();
+  }else{
+    alert("儲存失敗");
+  }
 }
 
 function editItem(id){ openModal(id); }
@@ -649,7 +627,13 @@ async function deleteItem(id){
   const x = data.find(v => v.id === id);
   if(!x) return;
   if(confirm(`確定要刪除「${x.name}」嗎？`)){
-    await deleteItemFromCloud(id);
+    const result = await apiPost({ action: "delete", id });
+    if(result.success){
+      selectedIds.delete(id);
+      await loadData();
+    }else{
+      alert("刪除失敗");
+    }
   }
 }
 
@@ -723,7 +707,6 @@ function toggleAdmin(){
   }
 }
 
-// 公告本地儲存
 announcements = JSON.parse(localStorage.getItem("miscFeeAnnouncements") || "[]");
 
 document.getElementById("search").addEventListener("keydown", e => {
@@ -734,7 +717,6 @@ document.getElementById("modal").addEventListener("click", e => { if(e.target.id
 document.getElementById("announceModal").addEventListener("click", e => { if(e.target.id === "announceModal") closeAnnounceModal(); });
 document.addEventListener("keydown", e => { if(e.key === "Escape"){ closeModal(); closeAnnounceModal(); }});
 
-// 啟動
 loadData();
 </script>
 </body>
