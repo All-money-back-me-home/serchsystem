@@ -442,7 +442,7 @@ const initialData = [
   {id:1786326935390, town:"東河鄉", name:"瑪屋撈外", code:"1046", price:130, distance:null},
   {id:1786329045348, town:"其他", name:"臺東(汽車、捷運)", code:null, price:334, distance:null},
   {id:1786329364411, town:"其他", name:"台東市(汽車及捷運)", code:"089", price:334, distance:null},
-  {id:1786329364412, town:"其他", name:"關山鎮(汽車及捷運)", code:"0899", price:514, distance:null},
+  {id:1786329364412, town:"其他", name:"關山鎮(汽車及捷運)", code:"089", price:514, distance:null},
 ];
 
 // ================== 雲端共用資料庫設定（Firebase） ==================
@@ -470,7 +470,7 @@ function annKey(id){ return "a"+id; }
 // 不需要後台登入、也不需要雲端資料庫。要新增/修改，直接改這個陣列裡的文字即可，
 // 一行一則，改完存檔、重新上傳到 GitHub 更新網站就會生效。
 const CODED_ANNOUNCEMENTS = [
-  "台東市代碼089、關山鎮代碼0899(汽車及捷運)"
+  "台東市、關山鎮(汽車及捷運)代碼089"
 ];
 function getAllAnnouncements(){
   const coded = CODED_ANNOUNCEMENTS.map((text,i)=>({id:"coded-"+i, text, coded:true}));
