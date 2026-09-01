@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0047bb">
-<title>差費金額查詢系統</title>
+<title>差費查詢系統</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Oswald:wght@500;600&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
@@ -208,7 +208,7 @@ body.admin-mode .admin-badge{display:inline-flex}
 <body>
 <header>
   <p class="eyebrow">台11線・東海岸・差費速算</p>
-  <h1>📋 差費金額查詢系統</h1>
+  <h1>📋 差費查詢系統</h1>
   <div class="header-wave" aria-hidden="true">
     <svg viewBox="0 0 1440 60" preserveAspectRatio="none">
       <path d="M0,30 C240,60 480,0 720,26 C960,52 1200,6 1440,30 L1440,60 L0,60 Z" fill="#ffffff" opacity=".18"/>
@@ -296,7 +296,7 @@ body.admin-mode .admin-badge{display:inline-flex}
       <input id="code" placeholder="例如：100（地政段代碼，非必填）">
     </div>
     <div class="form-group" id="groupPrice">
-      <label id="priceLabel">差費金額（元）*</label>
+      <label id="priceLabel">雜費（元）*</label>
       <input id="price" type="number" min="0" step="1" placeholder="例如：130">
     </div>
     <div class="form-group" id="groupDistance">
@@ -450,7 +450,7 @@ function render(){
         </div>
         ` : `
         <div class="ticket-fee">
-          <span class="ticket-label">差費金額</span>
+          <span class="ticket-label">雜費</span>
           <span class="ticket-value">${x.price==null?"—":"$"+Number(x.price).toLocaleString()}</span>
         </div>
         <div class="ticket-dist">
@@ -532,7 +532,7 @@ function toggleFormByTown(){
   document.getElementById("groupDistance").style.display = isOutside ? "none" : "";
   document.getElementById("groupBus").style.display = isOutside ? "" : "none";
   document.getElementById("groupTrain").style.display = isOutside ? "" : "none";
-  document.getElementById("priceLabel").textContent = isOutside ? "雜費金額（元）*" : "差費金額（元）*";
+  document.getElementById("priceLabel").textContent = isOutside ? "雜費金額（元）*" : "雜費（元）*";
 }
 
 function renderAnnouncement(isAdmin){
@@ -599,7 +599,7 @@ async function saveItem(){
   const busVal = document.getElementById("bus").value;
   const trainVal = document.getElementById("train").value;
   if(!name){ alert("請輸入地段名稱"); return; }
-  if(priceVal === ""){ alert(town === "轄區外" ? "請輸入雜費金額" : "請輸入差費金額"); return; }
+  if(priceVal === ""){ alert(town === "轄區外" ? "請輸入雜費金額" : "請輸入雜費"); return; }
 
   const item = {
     id: editingId || Date.now(),
@@ -641,7 +641,7 @@ function exportData(){
   const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "差費金額資料備份.json";
+  a.download = "雜費資料備份.json";
   a.click();
   URL.revokeObjectURL(a.href);
 }
