@@ -300,6 +300,80 @@ button,input{font-family:inherit}
 }
 
 
+
+/* A2HS / share tip on loading */
+.ls-a2hs{
+  position:absolute;bottom:max(110px, calc(env(safe-area-inset-bottom) + 100px));
+  left:50%;transform:translateX(-50%);
+  z-index:12;width:min(320px, calc(100vw - 32px));
+  pointer-events:auto;
+  animation:a2hsIn .5s ease .8s both;
+}
+@keyframes a2hsIn{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.ls-a2hs-card{
+  background:rgba(8,16,28,.88);
+  border:1px solid rgba(251,191,36,.35);
+  border-radius:12px;
+  padding:12px 14px;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  box-shadow:0 8px 32px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.04);
+  display:flex;align-items:flex-start;gap:12px;
+}
+.ls-a2hs-ico{
+  flex-shrink:0;width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(145deg,rgba(251,191,36,.25),rgba(251,191,36,.08));
+  border:1px solid rgba(251,191,36,.4);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--gold,#fbbf24);
+}
+.ls-a2hs-ico svg{width:18px;height:18px}
+.ls-a2hs-body{flex:1;min-width:0}
+.ls-a2hs-title{
+  font-size:12.5px;font-weight:700;color:#fff;margin-bottom:3px;
+  letter-spacing:.02em;
+}
+.ls-a2hs-desc{
+  font-size:11px;color:rgba(186,210,240,.7);line-height:1.4;
+  margin-bottom:10px;
+}
+
+.ls-a2hs-steps{
+  font-size:11px;color:rgba(186,210,240,.75);line-height:1.55;
+  margin-bottom:10px;padding:8px 10px;
+  background:rgba(255,255,255,.04);border-radius:8px;
+  border:1px solid rgba(255,255,255,.06);
+}
+.ls-a2hs-steps ol{margin:0;padding-left:18px}
+.ls-a2hs-steps li{margin:2px 0}
+.ls-a2hs-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.ls-a2hs-btn{
+  appearance:none;border:none;cursor:pointer;
+  font-family:inherit;font-size:11px;font-weight:700;
+  padding:7px 12px;border-radius:8px;
+  display:inline-flex;align-items:center;gap:5px;
+  transition:transform .15s,opacity .15s;
+}
+.ls-a2hs-btn:active{transform:scale(.96)}
+.ls-a2hs-btn.primary{
+  background:linear-gradient(145deg,#fbbf24,#d97706);
+  color:#1c1917;
+  box-shadow:0 2px 10px rgba(217,119,6,.35);
+}
+.ls-a2hs-btn.ghost{
+  background:rgba(255,255,255,.06);
+  color:rgba(226,236,250,.85);
+  border:1px solid rgba(255,255,255,.12);
+}
+.ls-a2hs-close{
+  position:absolute;top:8px;right:8px;
+  width:24px;height:24px;border:none;border-radius:50%;
+  background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);
+  font-size:14px;cursor:pointer;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+}
+.ls-a2hs-close:active{background:rgba(255,255,255,.12)}
+.ls-a2hs.hide{display:none}
+
 /* ===== APP SHELL — GTA HUD ===== */
 .app{
   max-width:430px;margin:0 auto;min-height:100dvh;position:relative;
@@ -599,6 +673,26 @@ button,input{font-family:inherit}
       <div class="ls-mission-name">台11線測量任務</div>
     </div>
   </div>
+
+  <div class="ls-a2hs" id="a2hsTip" role="dialog" aria-label="加到主畫面提示">
+    <div class="ls-a2hs-card">
+      <button type="button" class="ls-a2hs-close" id="a2hsClose" aria-label="關閉">×</button>
+      <div class="ls-a2hs-ico" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v10"/><path d="M8 9l4-4 4 4"/>
+          <path d="M5 19h14"/>
+        </svg>
+      </div>
+      <div class="ls-a2hs-body">
+        <div class="ls-a2hs-title">加到主畫面 · 快速查詢</div>
+        <div class="ls-a2hs-desc" id="a2hsDesc">把本網頁釘在手機桌面，下次一鍵進入。</div>
+        <div class="ls-a2hs-steps" id="a2hsSteps" hidden></div>
+        <div class="ls-a2hs-actions">
+          <button type="button" class="ls-a2hs-btn primary" id="a2hsAction">加到主畫面</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="app">
@@ -766,6 +860,123 @@ function updateSearch(){
 
 $("search").addEventListener("input",updateSearch);
 $("clearSearch").addEventListener("click",()=>{$("search").value="";updateSearch();$("search").focus();});
+
+/* A2HS — platform-aware, hide if already installed */
+(function(){
+  const tip=$("a2hsTip"), closeBtn=$("a2hsClose"), actionBtn=$("a2hsAction");
+  const desc=$("a2hsDesc"), steps=$("a2hsSteps");
+  if(!tip)return;
+
+  const isStandalone=
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia("(display-mode: fullscreen)").matches ||
+    window.navigator.standalone === true;
+  if(isStandalone){ tip.classList.add("hide"); return; }
+
+  if(sessionStorage.getItem("a2hs_dismissed")){ tip.classList.add("hide"); return; }
+
+  const ua=navigator.userAgent||"";
+  const isIOS=/iphone|ipad|ipod/i.test(ua) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+  const isAndroid=/android/i.test(ua);
+  const isSafari=/safari/i.test(ua) && !/crios|fxios|edgios|chrome|android/i.test(ua);
+  const isChrome=/chrome|crios|crmo/i.test(ua) && !/edg/i.test(ua);
+
+  let deferredPrompt=null;
+
+  function setIOSGuide(){
+    desc.textContent="iPhone / iPad：請用 Safari 加入主畫面。";
+    if(steps){
+      steps.hidden=false;
+      steps.innerHTML="<ol><li>點底部中央的「分享」按鈕</li><li>向下滑選「加入主畫面」</li><li>再點右上角「加入」</li></ol>";
+    }
+    actionBtn.textContent="查看步驟";
+  }
+  function setAndroidGuide(){
+    desc.textContent="Android：可安裝到主畫面，下次一鍵開啟。";
+    if(steps){ steps.hidden=true; steps.innerHTML=""; }
+    actionBtn.textContent="加到主畫面";
+  }
+  function setDesktopGuide(){
+    desc.textContent="建議用手機瀏覽器開啟後，再加到主畫面。";
+    if(steps){
+      steps.hidden=false;
+      steps.innerHTML="<ol><li>手機 Chrome：選單 ⋮ → 安裝應用程式／加到主畫面</li><li>iPhone Safari：分享 → 加入主畫面</li></ol>";
+    }
+    actionBtn.textContent="查看說明";
+  }
+
+  if(isIOS) setIOSGuide();
+  else if(isAndroid) setAndroidGuide();
+  else setDesktopGuide();
+
+  window.addEventListener("beforeinstallprompt",e=>{
+    e.preventDefault();
+    deferredPrompt=e;
+    if(!isIOS){
+      desc.textContent="偵測到可安裝，點右側按鈕即可加到主畫面。";
+      if(steps){ steps.hidden=true; steps.innerHTML=""; }
+      actionBtn.textContent="加到主畫面";
+    }
+  });
+
+  window.addEventListener("appinstalled",()=>{
+    tip.classList.add("hide");
+    sessionStorage.setItem("a2hs_dismissed","1");
+  });
+
+  function dismiss(){
+    tip.classList.add("hide");
+    sessionStorage.setItem("a2hs_dismissed","1");
+  }
+  closeBtn.addEventListener("click",dismiss);
+
+  actionBtn.addEventListener("click",async()=>{
+    // Android / Chrome install prompt
+    if(deferredPrompt){
+      deferredPrompt.prompt();
+      try{
+        const choice=await deferredPrompt.userChoice;
+        if(choice && choice.outcome==="accepted") dismiss();
+      }catch(_){}
+      deferredPrompt=null;
+      return;
+    }
+
+    if(isIOS){
+      // cannot open share sheet programmatically; expand steps & soft dismiss option
+      if(steps) steps.hidden=false;
+      desc.textContent="請依下列步驟操作（僅 Safari 支援）：";
+      if(steps){
+        steps.innerHTML="<ol><li>點瀏覽器底部「分享」圖示</li><li>滑動選單找到「加入主畫面」</li><li>確認名稱後點「加入」</li></ol>";
+      }
+      actionBtn.textContent="我知道了";
+      actionBtn.onclick=()=>{dismiss();};
+      return;
+    }
+
+    if(isAndroid){
+      desc.textContent="請點瀏覽器右上角「⋮」選單 →「加到主畫面」或「安裝應用程式」。";
+      if(steps){
+        steps.hidden=false;
+        steps.innerHTML="<ol><li>點右上角 ⋮</li><li>選擇「加到主畫面」或「安裝應用程式」</li><li>確認安裝</li></ol>";
+      }
+      actionBtn.textContent="我知道了";
+      actionBtn.onclick=()=>{dismiss();};
+      return;
+    }
+
+    // desktop / other
+    desc.textContent="請改用手機瀏覽器開啟本頁後再加入主畫面。";
+    if(steps){
+      steps.hidden=false;
+      steps.innerHTML="<ol><li>Android Chrome：⋮ → 安裝應用程式</li><li>iPhone Safari：分享 → 加入主畫面</li></ol>";
+    }
+    actionBtn.textContent="我知道了";
+    actionBtn.onclick=()=>{dismiss();};
+  });
+})();
+
+
 loadData();
 </script>
 </body>
