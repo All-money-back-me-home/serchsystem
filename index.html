@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0a1018">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="差費查詢">
+<meta name="application-name" content="差費查詢">
+<meta name="description" content="台11線東海岸差費金額即時查詢">
+<title>差費查詢</title>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;900&family=Oswald:wght@500;600;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a1018;
+  --bg-2:#0f1724;
+  --surface:#121c2c;
+  --surface-2:#162033;
+  --ink:#e8eef6;
+  --ink-2:#a8b8cc;
+  --muted:#6b7d94;
+  --muted-2:#4a5c72;
+  --sea:#3b82f6;
+  --sea-deep:#1e40af;
+  --sea-mid:#2563eb;
+  --sea-soft:rgba(59,130,246,.12);
+  --sea-border:rgba(59,130,246,.25);
+  --gold:#fbbf24;
+  --gold-dim:#ca8a04;
+  --green:#4ade80;
+  --green-dim:#16a34a;
+  --line:rgba(255,255,255,.08);
+  --line-2:rgba(255,255,255,.12);
+  --shadow:0 2px 12px rgba(0,0,0,.35);
+  --radius:12px;
+  --radius-sm:9px;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --sans:'Noto Sans TC','Microsoft JhengHei',system-ui,sans-serif;
+  --display:'Oswald',var(--sans);
+  --ease:cubic-bezier(.22,1,.36,1);
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-size-adjust:100%}
+body{
+  font-family:var(--sans);color:var(--ink);background:var(--bg);
+  min-height:100dvh;line-height:1.45;overflow-x:hidden;
+  padding-bottom:calc(12px + var(--safe-b));
+}
+::selection{background:rgba(59,130,246,.4);color:#fff}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+button,input{font-family:inherit}
+
+#loadingScreen{
+  position:fixed;inset:0;z-index:99999;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  background:#050d18;
+  transition:opacity .7s cubic-bezier(.22,1,.36,1),visibility .7s cubic-bezier(.22,1,.36,1);
+}
+#loadingScreen.hide{opacity:0;visibility:hidden;pointer-events:none}
+
+/* Full-screen GTA world */
+.ls-world{position:absolute;inset:0}
+.ls-sky{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 100% 60% at 50% -10%,rgba(30,80,140,.5),transparent 55%),
+    linear-gradient(180deg,#0a1628 0%,#0c2240 35%,#0a2a4a 55%,#061018 100%);
+}
+.ls-sky::after{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(circle at 70% 20%,rgba(251,191,36,.06),transparent 40%);
+  pointer-events:none;
+}
+.ls-city{
+  position:absolute;left:0;right:0;bottom:18%;height:42%;
+  background:
+    linear-gradient(90deg,
+      transparent 0%,rgba(15,40,70,.4) 8%,rgba(20,50,80,.5) 12%,transparent 18%,
+      transparent 25%,rgba(15,45,75,.45) 32%,rgba(25,55,90,.55) 38%,transparent 48%,
+      transparent 55%,rgba(18,48,78,.5) 62%,rgba(22,52,85,.5) 70%,transparent 80%,
+      transparent 85%,rgba(15,42,72,.4) 90%,transparent 100%);
+  mask-image:linear-gradient(to top,rgba(0,0,0,.9),transparent);
+  opacity:.85;
+}
+.ls-city::before{
+  content:"";position:absolute;inset:0;
+  background-image:
+    repeating-linear-gradient(90deg,transparent 0,transparent 18px,rgba(100,160,220,.08) 18px,rgba(100,160,220,.08) 20px),
+    repeating-linear-gradient(0deg,transparent 0,transparent 22px,rgba(100,160,220,.06) 22px,rgba(100,160,220,.06) 24px);
+  opacity:.6;
+}
+.ls-road{
+  position:absolute;left:0;right:0;bottom:0;height:22%;
+  background:linear-gradient(180deg,#0a1520 0%,#060c12 100%);
+}
+.ls-road::before{
+  content:"";position:absolute;left:0;right:0;top:0;height:3px;
+  background:linear-gradient(90deg,transparent,rgba(251,191,36,.5),transparent);
+  box-shadow:0 0 20px rgba(251,191,36,.25);
+}
+.ls-road-line{
+  position:absolute;left:50%;top:40%;width:4px;height:55%;
+  transform:translateX(-50%);
+  background:repeating-linear-gradient(180deg,#fbbf24 0 12px,transparent 12px 24px);
+  opacity:.35;animation:roadMove .6s linear infinite;
+}
+@keyframes roadMove{to{background-position:0 24px}}
+.ls-grid{
+  position:absolute;left:-20%;right:-20%;bottom:18%;height:45%;
+  background-image:
+    linear-gradient(90deg,rgba(56,120,180,.12) 1px,transparent 1px),
+    linear-gradient(rgba(56,120,180,.12) 1px,transparent 1px);
+  background-size:40px 40px;
+  transform:perspective(500px) rotateX(58deg);
+  transform-origin:center bottom;
+  animation:gridScroll 5s linear infinite;
+  opacity:.35;mask-image:linear-gradient(to top,rgba(0,0,0,.8),transparent);
+}
+@keyframes gridScroll{to{background-position:0 40px}}
+.ls-particles{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.ls-particles span{
+  position:absolute;bottom:-10px;border-radius:50%;
+  background:rgba(255,255,255,.4);box-shadow:0 0 8px rgba(180,220,255,.4);
+  animation:floatUp linear infinite;
+}
+.ls-particles span:nth-child(1){left:10%;width:4px;height:4px;animation-duration:6s}
+.ls-particles span:nth-child(2){left:25%;width:3px;height:3px;animation-duration:8s;animation-delay:1s}
+.ls-particles span:nth-child(3){left:45%;width:5px;height:5px;animation-duration:7s;animation-delay:.4s}
+.ls-particles span:nth-child(4){left:65%;width:3px;height:3px;animation-duration:9s;animation-delay:1.6s}
+.ls-particles span:nth-child(5){left:80%;width:4px;height:4px;animation-duration:6.5s;animation-delay:.8s}
+.ls-particles span:nth-child(6){left:92%;width:3px;height:3px;animation-duration:10s;animation-delay:2s}
+@keyframes floatUp{0%{transform:translateY(0);opacity:0}15%{opacity:.5}90%{opacity:.2}100%{transform:translateY(-100vh);opacity:0}}
+
+/* Survey silhouettes on horizon */
+.ls-silhouettes{
+  position:absolute;left:0;right:0;bottom:20%;height:120px;
+  pointer-events:none;z-index:2;
+}
+.sil-car{
+  position:absolute;left:50%;bottom:8px;width:90px;height:36px;
+  transform:translateX(-50%);
+  animation:silDrive 3s ease-in-out infinite;
+}
+@keyframes silDrive{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-48%) translateY(-2px)}}
+.sil-car-body{
+  position:absolute;bottom:8px;left:0;right:0;height:22px;
+  background:linear-gradient(180deg,#1e3a5f,#0f2438);
+  border-radius:5px 9px 3px 3px;
+  box-shadow:0 0 20px rgba(30,80,140,.4);
+}
+.sil-car-body::before{
+  content:"";position:absolute;top:-10px;left:14px;width:42px;height:12px;
+  background:#152a42;border-radius:6px 6px 0 0;
+}
+.sil-car-wheel{
+  position:absolute;bottom:0;width:12px;height:12px;border-radius:50%;
+  background:#0a1520;border:2px solid #2a4a6a;
+}
+.sil-car-wheel.l{left:10px}.sil-car-wheel.r{right:10px}
+.sil-tripod{
+  position:absolute;right:18%;bottom:10px;width:28px;height:70px;
+  opacity:.7;
+}
+.sil-tripod .pole{position:absolute;bottom:0;left:50%;width:3px;height:50px;background:#1a3550;transform:translateX(-50%)}
+.sil-tripod .leg-l,.sil-tripod .leg-r{
+  position:absolute;bottom:0;width:2px;height:48px;background:#152a40;transform-origin:bottom;
+}
+.sil-tripod .leg-l{left:40%;transform:rotate(20deg)}
+.sil-tripod .leg-r{right:40%;transform:rotate(-20deg)}
+.sil-tripod .head{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:22px;height:14px;background:#1e4060;border-radius:4px;
+  box-shadow:0 0 12px rgba(56,189,248,.25);
+}
+
+/* ===== HUD (full screen GTA) ===== */
+.ls-hud-top{
+  position:absolute;top:0;left:0;right:0;z-index:10;
+  display:flex;justify-content:space-between;align-items:flex-start;
+  padding:max(16px, env(safe-area-inset-top)) 16px 0;
+  pointer-events:none;
+}
+.ls-stars{display:flex;gap:4px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))}
+.ls-star{
+  width:18px;height:18px;
+  background:linear-gradient(145deg,#fde047,#ca8a04);
+  clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+  opacity:.2;animation:starOn .35s ease forwards;
+}
+.ls-star:nth-child(1){animation-delay:.2s}
+.ls-star:nth-child(2){animation-delay:.4s}
+.ls-star:nth-child(3){animation-delay:.6s}
+.ls-star:nth-child(4){animation-delay:.8s}
+.ls-star:nth-child(5){animation-delay:1s}
+@keyframes starOn{to{opacity:1}}
+.ls-cash{
+  font-family:var(--mono);font-size:14px;font-weight:700;
+  color:#4ade80;letter-spacing:.03em;
+  text-shadow:0 0 12px rgba(74,222,128,.5),0 2px 4px rgba(0,0,0,.6);
+  background:rgba(0,0,0,.4);border:1px solid rgba(74,222,128,.3);
+  border-radius:4px;padding:5px 12px;
+  backdrop-filter:blur(8px);
+}
+
+.ls-hud-center{
+  position:absolute;inset:0;z-index:8;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  pointer-events:none;padding:0 20px;
+}
+.ls-title-block{text-align:center;max-width:420px}
+.ls-game-logo{
+  font-family:var(--display);font-size:11px;font-weight:700;
+  letter-spacing:.35em;color:rgba(251,191,36,.8);text-transform:uppercase;
+  margin-bottom:10px;text-shadow:0 0 20px rgba(251,191,36,.3);
+}
+.ls-main-title{
+  font-size:clamp(28px,8vw,42px);font-weight:900;color:#fff;
+  letter-spacing:.02em;line-height:1.15;
+  text-shadow:0 2px 20px rgba(0,0,0,.5),0 0 40px rgba(37,99,235,.2);
+  margin-bottom:8px;
+}
+.ls-sub-title{
+  font-size:13px;font-weight:500;color:rgba(186,210,240,.7);
+  letter-spacing:.06em;margin-bottom:28px;
+}
+.ls-status{
+  font-size:13px;font-weight:600;color:rgba(255,255,255,.85);
+  min-height:20px;margin-bottom:14px;
+  text-shadow:0 1px 6px rgba(0,0,0,.4);
+  letter-spacing:.02em;
+}
+.ls-progress-wrap{
+  width:min(280px,70vw);height:6px;border-radius:999px;
+  background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);
+  overflow:hidden;margin:0 auto;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.4);
+}
+.ls-bar{
+  height:100%;width:0%;border-radius:999px;
+  background:linear-gradient(90deg,#fbbf24,#fde68a,#fbbf24);
+  background-size:200% 100%;
+  box-shadow:0 0 16px rgba(251,191,36,.55);
+  transition:width .3s cubic-bezier(.22,1,.36,1);
+  animation:barShine 1.4s linear infinite;
+}
+@keyframes barShine{to{background-position:-200% 0}}
+.ls-percent{
+  margin-top:10px;font-family:var(--mono);font-size:12px;font-weight:700;
+  color:rgba(255,255,255,.5);letter-spacing:.08em;
+}
+
+.ls-hud-bottom{
+  position:absolute;bottom:0;left:0;right:0;z-index:10;
+  display:flex;justify-content:space-between;align-items:flex-end;
+  padding:0 16px max(20px, env(safe-area-inset-bottom));
+  pointer-events:none;
+}
+.ls-radar{
+  width:80px;height:80px;border-radius:50%;
+  background:radial-gradient(circle,rgba(20,80,40,.5),rgba(0,20,10,.75));
+  border:2px solid rgba(74,222,128,.5);
+  box-shadow:0 0 0 1px rgba(0,0,0,.4),0 4px 20px rgba(0,0,0,.4),inset 0 0 24px rgba(34,197,94,.15);
+  overflow:hidden;position:relative;
+}
+.ls-radar::before{
+  content:"";position:absolute;inset:5px;border-radius:50%;
+  border:1px solid rgba(74,222,128,.2);
+  background:
+    linear-gradient(90deg,transparent 49.5%,rgba(74,222,128,.3) 50%,transparent 50.5%),
+    linear-gradient(transparent 49.5%,rgba(74,222,128,.3) 50%,transparent 50.5%);
+}
+.ls-radar-sweep{
+  position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(from 0deg,transparent 0deg,rgba(74,222,128,.4) 35deg,transparent 65deg);
+  animation:radarSpin 2.5s linear infinite;
+}
+@keyframes radarSpin{to{transform:rotate(360deg)}}
+.ls-radar-blip{
+  position:absolute;width:5px;height:5px;border-radius:50%;
+  background:#4ade80;box-shadow:0 0 8px #4ade80;
+  animation:blipPulse 1.3s ease-in-out infinite;
+}
+.ls-radar-blip.b1{top:30%;left:40%}
+.ls-radar-blip.b2{top:55%;left:60%;width:4px;height:4px;animation-delay:.4s}
+.ls-radar-blip.b3{top:45%;left:28%;width:3px;height:3px;animation-delay:.8s}
+@keyframes blipPulse{0%,100%{opacity:.4;transform:scale(1)}50%{opacity:1;transform:scale(1.25)}}
+.ls-mission{text-align:right}
+.ls-mission-tag{
+  font-family:var(--display);font-size:10px;font-weight:700;
+  letter-spacing:.22em;color:rgba(251,191,36,.9);text-transform:uppercase;
+  text-shadow:0 0 10px rgba(251,191,36,.3);margin-bottom:3px;
+}
+.ls-mission-name{
+  font-size:13px;font-weight:700;color:#fff;
+  text-shadow:0 1px 6px rgba(0,0,0,.5);
+}
+
+
+
+/* A2HS / share tip on loading */
+.ls-a2hs{
+  position:absolute;bottom:max(110px, calc(env(safe-area-inset-bottom) + 100px));
+  left:50%;transform:translateX(-50%);
+  z-index:12;width:min(320px, calc(100vw - 32px));
+  pointer-events:auto;
+  animation:a2hsIn .5s ease .8s both;
+}
+@keyframes a2hsIn{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.ls-a2hs-card{
+  background:rgba(8,16,28,.88);
+  border:1px solid rgba(251,191,36,.35);
+  border-radius:12px;
+  padding:12px 14px;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  box-shadow:0 8px 32px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.04);
+  display:flex;align-items:flex-start;gap:12px;
+}
+.ls-a2hs-ico{
+  flex-shrink:0;width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(145deg,rgba(251,191,36,.25),rgba(251,191,36,.08));
+  border:1px solid rgba(251,191,36,.4);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--gold,#fbbf24);
+}
+.ls-a2hs-ico svg{width:18px;height:18px}
+.ls-a2hs-body{flex:1;min-width:0}
+.ls-a2hs-title{
+  font-size:12.5px;font-weight:700;color:#fff;margin-bottom:3px;
+  letter-spacing:.02em;
+}
+.ls-a2hs-desc{
+  font-size:11px;color:rgba(186,210,240,.7);line-height:1.4;
+  margin-bottom:10px;
+}
+
+.ls-a2hs-steps{
+  font-size:11px;color:rgba(186,210,240,.75);line-height:1.55;
+  margin-bottom:10px;padding:8px 10px;
+  background:rgba(255,255,255,.04);border-radius:8px;
+  border:1px solid rgba(255,255,255,.06);
+}
+.ls-a2hs-steps ol{margin:0;padding-left:18px}
+.ls-a2hs-steps li{margin:2px 0}
+.ls-a2hs-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.ls-a2hs-btn{
+  appearance:none;border:none;cursor:pointer;
+  font-family:inherit;font-size:11px;font-weight:700;
+  padding:7px 12px;border-radius:8px;
+  display:inline-flex;align-items:center;gap:5px;
+  transition:transform .15s,opacity .15s;
+}
+.ls-a2hs-btn:active{transform:scale(.96)}
+.ls-a2hs-btn.primary{
+  background:linear-gradient(145deg,#fbbf24,#d97706);
+  color:#1c1917;
+  box-shadow:0 2px 10px rgba(217,119,6,.35);
+}
+.ls-a2hs-btn.ghost{
+  background:rgba(255,255,255,.06);
+  color:rgba(226,236,250,.85);
+  border:1px solid rgba(255,255,255,.12);
+}
+.ls-a2hs-close{
+  position:absolute;top:8px;right:8px;
+  width:24px;height:24px;border:none;border-radius:50%;
+  background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);
+  font-size:14px;cursor:pointer;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+}
+.ls-a2hs-close:active{background:rgba(255,255,255,.12)}
+.ls-a2hs.hide{display:none}
+
+/* ===== APP SHELL — GTA HUD ===== */
+.app{
+  max-width:430px;margin:0 auto;min-height:100dvh;position:relative;
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 0%,rgba(30,64,175,.15),transparent 50%),
+    var(--bg);
+}
+.app::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.04;
+  background-image:
+    linear-gradient(rgba(59,130,246,.8) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(59,130,246,.8) 1px,transparent 1px);
+  background-size:32px 32px;
+}
+
+.app-nav{
+  position:sticky;top:0;z-index:50;
+  background:linear-gradient(180deg,rgba(10,20,36,.97) 0%,rgba(15,28,48,.95) 100%);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  color:#fff;
+  padding:calc(10px + var(--safe-t)) 14px 12px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  border-bottom:1px solid var(--line-2);
+  box-shadow:0 4px 24px rgba(0,0,0,.4);
+}
+.app-nav::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),var(--green),transparent);
+  opacity:.7;
+}
+.app-nav-left{display:flex;align-items:center;gap:10px;min-width:0;position:relative;z-index:1}
+.app-nav-icon{
+  width:38px;height:38px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(145deg,rgba(251,191,36,.2),rgba(251,191,36,.05));
+  border:1px solid rgba(251,191,36,.35);
+  box-shadow:0 0 16px rgba(251,191,36,.15),inset 0 1px 0 rgba(255,255,255,.1);
+  display:flex;align-items:center;justify-content:center;color:var(--gold);
+  position:relative;
+}
+.app-nav-icon svg{width:20px;height:20px}
+.app-nav-icon .pulse{
+  position:absolute;inset:-3px;border-radius:12px;
+  border:1px solid rgba(251,191,36,.3);animation:navPulse 2.5s ease-in-out infinite;pointer-events:none;
+}
+@keyframes navPulse{0%,100%{opacity:.3}50%{opacity:.7}}
+.app-nav-titles{display:flex;flex-direction:column;gap:1px;min-width:0}
+.app-nav-title{font-size:14.5px;font-weight:800;letter-spacing:.01em;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app-nav-sub{font-size:10px;font-weight:500;color:var(--ink-2);display:flex;align-items:center;gap:5px}
+.app-nav-sub .dot{width:3px;height:3px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+.app-nav-right{display:flex;align-items:center;gap:8px;flex-shrink:0;position:relative;z-index:1}
+.app-nav-stars{display:flex;gap:2px}
+.app-nav-stars span{
+  width:11px;height:11px;
+  background:linear-gradient(145deg,#fde047,#ca8a04);
+  clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+  opacity:.85;
+}
+.app-nav-badge{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-width:42px;padding:4px 7px;
+  font-family:var(--display);font-weight:700;
+  background:linear-gradient(145deg,#fbbf24,#d97706);
+  color:#1c1917;border-radius:8px;
+  border:1px solid rgba(255,255,255,.3);
+  box-shadow:0 2px 10px rgba(217,119,6,.4),inset 0 1px 0 rgba(255,255,255,.35);
+  line-height:1.1;
+}
+.app-nav-badge .b-top{font-size:7px;letter-spacing:.12em;opacity:.75}
+.app-nav-badge .b-main{font-size:12px;letter-spacing:.04em}
+
+.app-body{padding:12px 12px 0;position:relative;z-index:1}
+
+.announce-wrap{display:none;margin-bottom:10px}
+.announce-wrap.show{display:block}
+.announce{
+  display:flex;gap:10px;align-items:flex-start;
+  background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);
+  border-radius:var(--radius-sm);padding:10px 12px;position:relative;
+}
+.announce::before{
+  content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;
+  background:var(--gold);border-radius:0 2px 2px 0;
+}
+.announce-icon{font-size:14px;flex-shrink:0;line-height:1.4}
+.announce-text{flex:1;font-size:12.5px;color:#fde68a;line-height:1.5;white-space:pre-wrap}
+
+.search-block{
+  background:var(--surface);
+  border:1px solid var(--line-2);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:12px;margin-bottom:12px;
+  position:relative;overflow:hidden;
+}
+.search-block::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--gold),var(--green));
+}
+.search-label{
+  font-size:10px;font-weight:700;color:var(--muted);
+  letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;
+  display:flex;align-items:center;gap:8px;
+}
+.search-label span{
+  background:rgba(74,222,128,.12);color:var(--green);
+  font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;
+  letter-spacing:.08em;border:1px solid rgba(74,222,128,.25);
+}
+.search-bar{
+  display:flex;align-items:center;
+  background:var(--bg-2);border:1.5px solid var(--line-2);
+  border-radius:var(--radius-sm);height:44px;
+  transition:border-color .2s,box-shadow .2s;overflow:hidden;
+}
+.search-bar:focus-within{
+  border-color:var(--gold);
+  box-shadow:0 0 0 3px rgba(251,191,36,.12);
+  background:#0c1420;
+}
+.search-bar .ico{
+  flex-shrink:0;width:40px;display:flex;align-items:center;justify-content:center;
+  color:var(--muted);
+}
+.search-bar .ico svg{width:18px;height:18px}
+.search-bar:focus-within .ico{color:var(--gold)}
+.search-bar input{
+  flex:1;height:100%;border:none;background:transparent;
+  font-size:15px;font-weight:500;color:var(--ink);outline:none;min-width:0;
+}
+.search-bar input::placeholder{color:var(--muted-2);font-weight:400}
+.search-bar .clear{
+  flex-shrink:0;width:36px;height:36px;border:none;background:transparent;
+  color:var(--muted);font-size:18px;cursor:pointer;display:none;
+  align-items:center;justify-content:center;border-radius:50%;
+}
+.search-bar .clear:active{background:var(--line)}
+
+.results{display:none}
+.results.show{display:block;animation:fadeIn .3s var(--ease)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.results-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:4px 4px 10px;
+}
+.results-label{
+  font-family:var(--display);font-size:10px;font-weight:700;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--gold);
+  display:flex;align-items:center;gap:6px;
+}
+.results-label::before{
+  content:"";width:6px;height:6px;
+  background:var(--gold);
+  clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+}
+.results-count{
+  font-family:var(--mono);font-size:11px;font-weight:700;
+  color:var(--green);background:rgba(74,222,128,.1);
+  border:1px solid rgba(74,222,128,.25);border-radius:999px;padding:3px 10px;
+}
+
+.list{display:flex;flex-direction:column;gap:8px}
+.cell{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  animation:cellIn .3s var(--ease) both;
+  transition:transform .2s,border-color .2s,box-shadow .2s;
+  position:relative;
+}
+.cell::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,var(--gold),var(--green));
+  opacity:0;transition:opacity .2s;
+}
+.cell:active{transform:scale(.985)}
+.cell:hover{border-color:var(--line-2);box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.cell:hover::before{opacity:1}
+@keyframes cellIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.cell-top{
+  padding:12px 14px 10px;
+  display:flex;align-items:flex-start;justify-content:space-between;gap:8px;
+}
+.cell-name{
+  font-size:14.5px;font-weight:700;line-height:1.3;color:var(--ink);
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+}
+.chip{
+  font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:4px;
+  letter-spacing:.03em;line-height:1.4;
+}
+.chip-town{
+  color:#0c1220;background:linear-gradient(135deg,var(--gold),var(--gold-dim));
+}
+.chip-code{
+  color:var(--ink-2);background:rgba(255,255,255,.05);
+  border:1px solid var(--line-2);font-family:var(--mono);font-weight:600;
+}
+.cell-stats{
+  display:flex;border-top:1px solid var(--line);
+  background:rgba(0,0,0,.25);
+}
+.stat{
+  flex:1;padding:9px 6px;text-align:center;
+  border-right:1px solid var(--line);min-width:0;
+}
+.stat:last-child{border-right:none}
+.stat-label{
+  display:block;font-size:9px;font-weight:600;color:var(--muted);
+  letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px;
+}
+.stat-val{
+  font-family:var(--mono);font-size:14px;font-weight:700;color:var(--green);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  text-shadow:0 0 12px rgba(74,222,128,.2);
+}
+.stat-val.dim{color:var(--ink-2);font-size:13px;text-shadow:none}
+
+.empty{
+  text-align:center;padding:36px 16px;
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius);box-shadow:var(--shadow);
+}
+.empty-ico{font-size:28px;margin-bottom:8px;opacity:.5}
+.empty p{font-size:14px;font-weight:600;color:var(--ink-2)}
+.empty small{display:block;margin-top:4px;font-size:12px;color:var(--muted)}
+
+.app-foot{
+  text-align:center;padding:18px 12px 8px;
+  font-size:10px;color:var(--muted-2);letter-spacing:.08em;
+  font-family:var(--display);text-transform:uppercase;
+}
+
+@media(min-width:431px){
+  body{background:#050a10}
+  .app{
+    box-shadow:0 0 0 1px var(--line-2),0 12px 48px rgba(0,0,0,.5);
+    border-radius:0 0 16px 16px;min-height:auto;margin-bottom:24px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<div id="loadingScreen" role="status" aria-live="polite" aria-label="載入中">
+  <div class="ls-world" aria-hidden="true">
+    <div class="ls-sky"></div>
+    <div class="ls-particles"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="ls-grid"></div>
+    <div class="ls-city"></div>
+    <div class="ls-silhouettes">
+      <div class="sil-car">
+        <div class="sil-car-body"></div>
+        <div class="sil-car-wheel l"></div>
+        <div class="sil-car-wheel r"></div>
+      </div>
+      <div class="sil-tripod">
+        <div class="leg-l"></div><div class="leg-r"></div>
+        <div class="pole"></div><div class="head"></div>
+      </div>
+    </div>
+    <div class="ls-road"><div class="ls-road-line"></div></div>
+  </div>
+
+  <div class="ls-hud-top" aria-hidden="true">
+    <div class="ls-stars">
+      <div class="ls-star"></div><div class="ls-star"></div><div class="ls-star"></div>
+      <div class="ls-star"></div><div class="ls-star"></div>
+    </div>
+    <div class="ls-cash">$ 差費就緒</div>
+  </div>
+
+  <div class="ls-hud-center">
+    <div class="ls-title-block">
+      <p class="ls-game-logo">Grand Survey Auto</p>
+      <h2 class="ls-main-title">台11線測量</h2>
+      <p class="ls-sub-title">EAST COAST · CADASTRAL OPS</p>
+      <div class="ls-status" id="loadingStatus">任務開始：定位測量儀器…</div>
+      <div class="ls-progress-wrap"><div class="ls-bar" id="loadingBar"></div></div>
+      <div class="ls-percent"><span id="loadingPercent">0%</span></div>
+    </div>
+  </div>
+
+  <div class="ls-hud-bottom" aria-hidden="true">
+    <div class="ls-radar">
+      <div class="ls-radar-sweep"></div>
+      <div class="ls-radar-blip b1"></div>
+      <div class="ls-radar-blip b2"></div>
+      <div class="ls-radar-blip b3"></div>
+    </div>
+    <div class="ls-mission">
+      <div class="ls-mission-tag">Mission</div>
+      <div class="ls-mission-name">台11線測量任務</div>
+    </div>
+  </div>
+
+  <div class="ls-a2hs" id="a2hsTip" role="dialog" aria-label="加到主畫面提示">
+    <div class="ls-a2hs-card">
+      <button type="button" class="ls-a2hs-close" id="a2hsClose" aria-label="關閉">×</button>
+      <div class="ls-a2hs-ico" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v10"/><path d="M8 9l4-4 4 4"/>
+          <path d="M5 19h14"/>
+        </svg>
+      </div>
+      <div class="ls-a2hs-body">
+        <div class="ls-a2hs-title">加到主畫面 · 快速查詢</div>
+        <div class="ls-a2hs-desc" id="a2hsDesc">把本網頁釘在手機桌面，下次一鍵進入。</div>
+        <div class="ls-a2hs-steps" id="a2hsSteps" hidden></div>
+        <div class="ls-a2hs-actions">
+          <button type="button" class="ls-a2hs-btn primary" id="a2hsAction">加到主畫面</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <nav class="app-nav">
+    <div class="app-nav-left">
+      <div class="app-nav-icon" aria-hidden="true">
+        <span class="pulse"></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="8" r="3.2"/>
+          <path d="M12 11.2V16"/>
+          <path d="M8 20l4-4 4 4"/>
+          <path d="M5 8h2.2M16.8 8H19"/>
+          <path d="M12 4.8V3"/>
+        </svg>
+      </div>
+      <div class="app-nav-titles">
+        <div class="app-nav-title">差費金額查詢</div>
+        <div class="app-nav-sub">台11線 <span class="dot"></span> 東海岸測量</div>
+      </div>
+    </div>
+    <div class="app-nav-right">
+      <div class="app-nav-stars" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="app-nav-badge">
+        <span class="b-top">台11</span>
+        <span class="b-main">線</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="app-body">
+    <div class="announce-wrap" id="announceWrap">
+      <div class="announce-list" id="announceList"></div>
+    </div>
+
+    <div class="search-block">
+      <div class="search-label">任務搜尋 <span>LIVE</span></div>
+      <div class="search-bar">
+        <span class="ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        </span>
+        <input id="search" type="search" autocomplete="off" placeholder="地區、地段或段碼" aria-label="搜尋">
+        <button class="clear" id="clearSearch" type="button" aria-label="清除">×</button>
+      </div>
+    </div>
+
+    <div class="results" id="resultsSection">
+      <div class="results-head">
+        <span class="results-label">MISSION RESULTS</span>
+        <span class="results-count" id="resultCount"></span>
+      </div>
+      <div class="list" id="tbody"></div>
+    </div>
+  </div>
+
+  <div class="app-foot">Grand Survey Auto · 台11線</div>
+</div>
+
+<script>
+const API_URL="https://script.google.com/macros/s/AKfycbzKzIiXl7bNtTzHUWdDIkE8OsTAIXXJqwBDwvBt77PJpVKm_dJ6z0RTjMemYEZWBvwe/exec";
+let data=[],announcements=[];
+const $=id=>document.getElementById(id);
+const normalize=v=>String(v??"").trim().toLowerCase();
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+let loadingTimer=null,loadingStart=performance.now();
+const msgs=["任務開始：定位測量儀器…","鎖定目標：經緯儀對準中…","訊號確認：菱鏡接收中…","座標校準：EGPS 連線中…","界樁標記比對中…","差費資料下載中…","任務即將完成…"];
+
+function setProgress(v,msg){
+  const n=Math.max(0,Math.min(100,v));
+  $("loadingBar").style.width=n+"%";
+  $("loadingPercent").textContent=Math.round(n)+"%";
+  if(msg)$("loadingStatus").textContent=msg;
+}
+function finishLoading(){
+  const wait=Math.max(0,1600-(performance.now()-loadingStart));
+  setTimeout(()=>{setProgress(100,"MISSION PASSED");setTimeout(()=>$("loadingScreen").classList.add("hide"),350);},wait);
+}
+function startLoading(){
+  loadingStart=performance.now();setProgress(5,msgs[0]);
+  let p=5,i=0;
+  loadingTimer=setInterval(()=>{
+    i=(i+1)%msgs.length;p=Math.min(p+Math.random()*12+4,85);
+    setProgress(p,msgs[i]);
+    if(p>=85){clearInterval(loadingTimer);loadingTimer=null;}
+  },300);
+}
+
+async function loadData(){
+  startLoading();
+  try{
+    setProgress(15,"正在連線…");
+    const res=await fetch(API_URL+"?action=list");
+    if(!res.ok)throw new Error("fail");
+    setProgress(45,"解析資料…");
+    const json=await res.json();
+    data=(json.items||[]).map(x=>{if(x.town==="其他")x.town="轄區外";return x;});
+    announcements=json.announcements||[];
+    setProgress(75,"建立索引…");
+    renderAnnouncements();
+    setProgress(92,"完成");
+    finishLoading();
+  }catch(e){
+    console.error(e);
+    if(loadingTimer){clearInterval(loadingTimer);loadingTimer=null;}
+    setProgress(100,"載入失敗");
+    $("tbody").innerHTML='<div class="empty"><div class="empty-ico">⚠️</div><p>無法載入資料</p><small>請檢查網路後重試</small></div>';
+    $("resultsSection").classList.add("show");
+    setTimeout(()=>$("loadingScreen").classList.add("hide"),900);
+  }
+}
+
+function renderAnnouncements(){
+  const wrap=$("announceWrap"),list=$("announceList");
+  if(announcements.length){
+    wrap.classList.add("show");
+    list.innerHTML=announcements.map(a=>`<div class="announce"><span class="announce-icon">📢</span><p class="announce-text">${esc(a.text)}</p></div>`).join("");
+  }else{wrap.classList.remove("show");list.innerHTML="";}
+}
+
+function getFiltered(q){
+  if(!q)return[];
+  return data.filter(x=>normalize(x.name).includes(q)||normalize(x.town).includes(q)||normalize(x.code).includes(q));
+}
+
+function renderCell(x){
+  const bus=x.bus==null?null:Number(x.bus);
+  const train=x.train==null?null:Number(x.train);
+  const oneWay=(bus||0)+(train||0);
+  const hasT=bus!=null||train!=null;
+  let stats="";
+  if(x.town==="轄區外"){
+    stats=`
+      <div class="stat"><span class="stat-label">客運</span><span class="stat-val">${bus==null?"—":"$"+bus.toLocaleString()}</span></div>
+      <div class="stat"><span class="stat-label">火車</span><span class="stat-val">${train==null?"—":"$"+train.toLocaleString()}</span></div>
+      <div class="stat"><span class="stat-label">單趟</span><span class="stat-val">${hasT?"$"+oneWay.toLocaleString():"—"}</span></div>
+      <div class="stat"><span class="stat-label">來回</span><span class="stat-val">${hasT?"$"+(oneWay*2).toLocaleString():"—"}</span></div>
+      <div class="stat"><span class="stat-label">雜費</span><span class="stat-val">${x.price==null?"—":"$"+Number(x.price).toLocaleString()}</span></div>`;
+  }else{
+    stats=`
+      <div class="stat"><span class="stat-label">雜費</span><span class="stat-val">${x.price==null?"—":"$"+Number(x.price).toLocaleString()}</span></div>
+      <div class="stat"><span class="stat-label">里程</span><span class="stat-val dim">${x.distance==null?"—":x.distance+" km"}</span></div>`;
+  }
+  return `<div class="cell">
+    <div class="cell-top">
+      <div class="cell-name">${esc(x.name)} <span class="chip chip-town">${esc(x.town)}</span>${x.code?` <span class="chip chip-code">${esc(x.code)}</span>`:""}</div>
+    </div>
+    <div class="cell-stats">${stats}</div>
+  </div>`;
+}
+
+function updateSearch(){
+  const q=normalize($("search").value);
+  const sec=$("resultsSection"),tbody=$("tbody"),count=$("resultCount"),clear=$("clearSearch");
+  clear.style.display=q?"flex":"none";
+  if(!q){sec.classList.remove("show");count.textContent="";return;}
+  const list=getFiltered(q);
+  sec.classList.add("show");
+  count.textContent=list.length+" 筆";
+  if(!list.length){
+    tbody.innerHTML='<div class="empty"><div class="empty-ico">🔍</div><p>找不到符合資料</p><small>試試地區、地段或段碼</small></div>';
+    return;
+  }
+  tbody.innerHTML=list.map(renderCell).join("");
+}
+
+$("search").addEventListener("input",updateSearch);
+$("clearSearch").addEventListener("click",()=>{$("search").value="";updateSearch();$("search").focus();});
+
+/* A2HS — platform-aware, hide if already installed */
+(function(){
+  const tip=$("a2hsTip"), closeBtn=$("a2hsClose"), actionBtn=$("a2hsAction");
+  const desc=$("a2hsDesc"), steps=$("a2hsSteps");
+  if(!tip)return;
+
+  const isStandalone=
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia("(display-mode: fullscreen)").matches ||
+    window.navigator.standalone === true;
+  if(isStandalone){ tip.classList.add("hide"); return; }
+
+  if(sessionStorage.getItem("a2hs_dismissed")){ tip.classList.add("hide"); return; }
+
+  const ua=navigator.userAgent||"";
+  const isIOS=/iphone|ipad|ipod/i.test(ua) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+  const isAndroid=/android/i.test(ua);
+  const isSafari=/safari/i.test(ua) && !/crios|fxios|edgios|chrome|android/i.test(ua);
+  const isChrome=/chrome|crios|crmo/i.test(ua) && !/edg/i.test(ua);
+
+  let deferredPrompt=null;
+
+  function setIOSGuide(){
+    desc.textContent="iPhone / iPad：請用 Safari 加入主畫面。";
+    if(steps){
+      steps.hidden=false;
+      steps.innerHTML="<ol><li>點底部中央的「分享」按鈕</li><li>向下滑選「加入主畫面」</li><li>再點右上角「加入」</li></ol>";
+    }
+    actionBtn.textContent="查看步驟";
+  }
+  function setAndroidGuide(){
+    desc.textContent="Android：可安裝到主畫面，下次一鍵開啟。";
+    if(steps){ steps.hidden=true; steps.innerHTML=""; }
+    actionBtn.textContent="加到主畫面";
+  }
+  function setDesktopGuide(){
+    desc.textContent="建議用手機瀏覽器開啟後，再加到主畫面。";
+    if(steps){
+      steps.hidden=false;
+      steps.innerHTML="<ol><li>手機 Chrome：選單 ⋮ → 安裝應用程式／加到主畫面</li><li>iPhone Safari：分享 → 加入主畫面</li></ol>";
+    }
+    actionBtn.textContent="查看說明";
+  }
+
+  if(isIOS) setIOSGuide();
+  else if(isAndroid) setAndroidGuide();
+  else setDesktopGuide();
+
+  window.addEventListener("beforeinstallprompt",e=>{
+    e.preventDefault();
+    deferredPrompt=e;
+    if(!isIOS){
+      desc.textContent="偵測到可安裝，點右側按鈕即可加到主畫面。";
+      if(steps){ steps.hidden=true; steps.innerHTML=""; }
+      actionBtn.textContent="加到主畫面";
+    }
+  });
+
+  window.addEventListener("appinstalled",()=>{
+    tip.classList.add("hide");
+    sessionStorage.setItem("a2hs_dismissed","1");
+  });
+
+  function dismiss(){
+    tip.classList.add("hide");
+    sessionStorage.setItem("a2hs_dismissed","1");
+  }
+  closeBtn.addEventListener("click",dismiss);
+
+  actionBtn.addEventListener("click",async()=>{
+    // Android / Chrome install prompt
+    if(deferredPrompt){
+      deferredPrompt.prompt();
+      try{
+        const choice=await deferredPrompt.userChoice;
+        if(choice && choice.outcome==="accepted") dismiss();
+      }catch(_){}
+      deferredPrompt=null;
+      return;
+    }
+
+    if(isIOS){
+      // cannot open share sheet programmatically; expand steps & soft dismiss option
+      if(steps) steps.hidden=false;
+      desc.textContent="請依下列步驟操作（僅 Safari 支援）：";
+      if(steps){
+        steps.innerHTML="<ol><li>點瀏覽器底部「分享」圖示</li><li>滑動選單找到「加入主畫面」</li><li>確認名稱後點「加入」</li></ol>";
+      }
+      actionBtn.textContent="我知道了";
+      actionBtn.onclick=()=>{dismiss();};
+      return;
+    }
+
+    if(isAndroid){
+      desc.textContent="請點瀏覽器右上角「⋮」選單 →「加到主畫面」或「安裝應用程式」。";
+      if(steps){
+        steps.hidden=false;
+        steps.innerHTML="<ol><li>點右上角 ⋮</li><li>選擇「加到主畫面」或「安裝應用程式」</li><li>確認安裝</li></ol>";
+      }
+      actionBtn.textContent="我知道了";
+      actionBtn.onclick=()=>{dismiss();};
+      return;
+    }
+
+    // desktop / other
+    desc.textContent="請改用手機瀏覽器開啟本頁後再加入主畫面。";
+    if(steps){
+      steps.hidden=false;
+      steps.innerHTML="<ol><li>Android Chrome：⋮ → 安裝應用程式</li><li>iPhone Safari：分享 → 加入主畫面</li></ol>";
+    }
+    actionBtn.textContent="我知道了";
+    actionBtn.onclick=()=>{dismiss();};
+  });
+})();
+
+
+loadData();
+</script>
+</body>
+</html>
